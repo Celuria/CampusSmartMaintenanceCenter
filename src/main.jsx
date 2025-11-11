@@ -1,13 +1,12 @@
-import { StrictMode } from 'react'
-import { createRoot } from 'react-dom/client'
-import './index.css'
-import Login from './Login.jsx'
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import { BrowserRouter } from 'react-router-dom';
+import Login from './Login';
 
-//命令：npm install antd
-//import 'antd/dist/antd.css'; Antdesign UI库
-
-createRoot(document.getElementById('root')).render(
-  <StrictMode>
-    <Login/>
-  </StrictMode>,
-)
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <React.StrictMode>
+    <BrowserRouter>
+      <Login />
+    </BrowserRouter>
+  </React.StrictMode>
+);
