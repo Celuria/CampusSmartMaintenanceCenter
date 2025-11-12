@@ -1,8 +1,8 @@
-import './Login.css'
-import {useEffect} from 'react';
+import './Login.css';
+//import {useEffect} from 'react';
 import {useState} from 'react';
 import {useNavigate} from 'react-router-dom';
-import {Link} from 'react-router-dom';
+//import {Link} from 'react-router-dom';
 
 function Login() {
     const[username, setUsername] = useState('');
@@ -29,7 +29,7 @@ function Login() {
                 <input
                 type="text"
                 value={username}
-                onChangeCapture={(e)=>setUsername(e.target.value)}
+                onChange={(e)=>setUsername(e.target.value)}
                 placeholder="请输入用户名"
                 />
             </div>
@@ -39,7 +39,7 @@ function Login() {
                 <input
                 type="password"
                 value={password}
-                onChangeCapture={(e)=>setPassword(e.target.value)}
+                onChange={(e)=>setPassword(e.target.value)}
                 placeholder="请输入密码"
                 />
             </div>
