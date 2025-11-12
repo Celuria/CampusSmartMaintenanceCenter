@@ -1,10 +1,9 @@
 import React from 'react';
-//import { BrowserRouter as Router, Route, Routes } from 'react-router-dom'; //命令：npm install react-router-dom @types/react-router-dom
 import {Routes, Route} from 'react-router-dom';
 
-import Home from './components/Home';
-import About from './components/About';
-import Contact from './components/Contact';
+import StuHome from './pages/student/stuhome';
+import WorkerHome from './pages/worker/workerhome';
+import AdminHome from './pages/admin/adminhome';
 import Login from './Login';
 
 function App(){
@@ -12,9 +11,11 @@ function App(){
         <div className="App">
             <Routes>
                 <Route path="/" element={<Login />} />
-                <Route path="/home" element={<Home />} />
-                <Route path="/about" element={<About />} />
-                <Route path="/contact" element={<Contact />} />
+                <Route path="/stuhome" element={<StuHome />} />
+                <Route path="/workerhome" element={<WorkerHome />} />
+                <Route path="/adminhome" element={<AdminHome />} />
+                {/*<Route path="/about" element={<About />} />*/}
+                {/*<Route path="/contact" element={<Contact />} />*/}
             </Routes>
         </div>
     );
