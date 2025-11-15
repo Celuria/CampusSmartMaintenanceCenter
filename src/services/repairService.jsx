@@ -184,11 +184,11 @@ export const repairUtils = {
 
   // 获取维修人员信息
   getRepairmanInfo: (repairmanId) => {
-    return REPAIRMEN[repairmanId] || null;
-  },
-
-  // 安全地显示文本，处理空值
-  safeText: (value, placeholder = '暂无') => {
-    return value || placeholder;
+    const repairmen = {
+      1: { id: 1, name: '张师傅' },
+      2: { id: 2, name: '李师傅' },
+      3: { id: 3, name: '王师傅' },
+    };
+    return repairmen[repairmanId] || null;
   },
 };

@@ -1,43 +1,35 @@
 // src/components/UserManagement.jsx
-import React, { useState } from 'react';
-import { Menu, Card, List, Space } from 'antd';
-import { UserOutlined, ToolOutlined } from '@ant-design/icons';
+import React, { useState, useEffect } from 'react';
+import { Card, Table, Space, Select, Row, Col, Statistic, Tag } from 'antd';
+import { UserOutlined, ToolOutlined, TeamOutlined, PhoneOutlined } from '@ant-design/icons';
+
+const { Option } = Select;
 
 const UserManagement = () => {
   const [currentUserType, setCurrentUserType] = useState('students');
+  const [loading, setLoading] = useState(false);
 
   // 模拟学生账号数据
   const studentAccounts = [
-    { id: '001' },
-    { id: '002' },
-    { id: '003' },
-    
+    { id: '20210001', nickname: '张三', phone: '13800138001' },
+    { id: '20210002', nickname: '李四', phone: '13800138002' },
+    { id: '20210003', nickname: '王五', phone: '13800138003' },
+    { id: '20210004', nickname: '赵六', phone: '13800138004' },
+    { id: '20210005', nickname: '钱七', phone: '13800138005' },
+    { id: '20210006', nickname: '孙八', phone: '13800138006' }
   ];
 
   // 模拟维修人员账号数据
   const repairmanAccounts = [
-    { id: '1' },
-    { id: '2' },
-    { id: '3' },
+    { id: 'worker001', nickname: '张师傅', phone: '13900139001' },
+    { id: 'worker002', nickname: '李师傅', phone: '13900139002' },
+    { id: 'worker003', nickname: '王师傅', phone: '13900139003' },
+    { id: 'worker004', nickname: '赵师傅', phone: '13900139004' }
   ];
 
-  // 垂直菜单配置
-  const userTypeMenuItems = [
-    {
-      key: 'students',
-      icon: <UserOutlined />,
-      label: '学生账号',
-    },
-    {
-      key: 'repairmen',
-      icon: <ToolOutlined />,
-      label: '维修人员账号',
-    },
-  ];
-
-  // 处理菜单点击
-  const handleMenuClick = (e) => {
-    setCurrentUserType(e.key);
+  // 处理下拉菜单选择
+  const handleUserTypeChange = (value) => {
+    setCurrentUserType(value);
   };
 
   // 获取当前显示的数据
@@ -47,51 +39,133 @@ const UserManagement = () => {
 
   // 获取当前标题
   const getCurrentTitle = () => {
-    return currentUserType === 'students' ? '学生账号列表' : '维修人员账号列表';
+    return currentUserType === 'students' ? '学生账号' : '维修人员账号';
   };
 
-  return (
-    <div style={{ display: 'flex', gap: '16px', minHeight: '500px' }}>
-      {/* 左侧垂直菜单 */}
-      <div style={{ width: '200px' }}>
-        <Card title="账号类型" size="small">
-          <Menu
-            onClick={handleMenuClick}
-            selectedKeys={[currentUserType]}
-            mode="vertical"
-            items={userTypeMenuItems}
-            style={{ border: 'none' }}
-          />
-        </Card>
-      </div>
+  // 表格列定义
+  const columns = [
+    {
+      title: '用户ID',
+      dataIndex: 'id',
+      key: 'id',
+      width: 150,
+      render: (id) => (
+        <Space>
+          <UserOutlined />
+          <span style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>
+            {id}
+          </span>
+        </Space>
+      ),
+    },
+    {
+      title: '昵称',
+      dataIndex: 'nickname',
+      key: 'nickname',
+      width: 120,
+    },
+    {
+      title: '联系电话',
+      dataIndex: 'phone',
+      key: 'phone',
+      width: 150,
+      render: (phone) => (
+        <Space>
+          <PhoneOutlined />
+          {phone}
+        </Space>
+      ),
+    },
+    {
+      title: '用户类型',
+      key: 'type',
+      width: 100,
+      render: (_, record) => (
+        <Tag color={currentUserType === 'students' ? 'blue' : 'green'}>
+          {currentUserType === 'students' ? '学生' : '维修人员'}
+        </Tag>
+      ),
+    },
+  ];
 
-      {/* 右侧内容区域 */}
-      <div style={{ flex: 1 }}>
-        <Card title={getCurrentTitle()}>
-          <List
-            dataSource={getCurrentData()}
-            renderItem={(item) => (
-              <List.Item>
-                <div style={{ 
-                  padding: '8px 12px', 
-                  border: '1px solid #d9d9d9', 
-                  borderRadius: '4px',
-                  width: '100%',
-                  backgroundColor: '#fafafa'
-                }}>
-                  <Space>
-                    <UserOutlined />
-                    <span style={{ fontFamily: 'monospace', fontSize: '16px' }}>
-                      {item.id}
-                    </span>
-                  </Space>
-                </div>
-              </List.Item>
-            )}
-            locale={{ emptyText: '暂无账号数据' }}
-          />
-        </Card>
-      </div>
+  return (
+    <div>
+      <h2>用户管理</h2>
+      
+      {/* 统计信息 */}
+      <Row gutter={16} style={{ marginBottom: '16px' }}>
+        <Col span={8}>
+          <Card>
+            <Statistic
+              title="学生总数"
+              value={studentAccounts.length}
+              prefix={<UserOutlined />}
+              valueStyle={{ color: '#1890ff' }}
+            />
+          </Card>
+        </Col>
+        <Col span={8}>
+          <Card>
+            <Statistic
+              title="维修人员总数"
+              value={repairmanAccounts.length}
+              prefix={<ToolOutlined />}
+              valueStyle={{ color: '#52c41a' }}
+            />
+          </Card>
+        </Col>
+        <Col span={8}>
+          <Card>
+            <Statistic
+              title="总用户数"
+              value={studentAccounts.length + repairmanAccounts.length}
+              prefix={<TeamOutlined />}
+              valueStyle={{ color: '#faad14' }}
+            />
+          </Card>
+        </Col>
+      </Row>
+
+      {/* 用户类型选择和表格 */}
+      <Card 
+        title={getCurrentTitle()}
+        extra={
+          <Select
+            defaultValue="students"
+            style={{ width: 200 }}
+            onChange={handleUserTypeChange}
+            size="large"
+          >
+            <Option value="students">
+              <Space>
+                <UserOutlined />
+                学生账号
+              </Space>
+            </Option>
+            <Option value="repairmen">
+              <Space>
+                <ToolOutlined />
+                维修人员账号
+              </Space>
+            </Option>
+          </Select>
+        }
+      >
+        <Table
+          columns={columns}
+          dataSource={getCurrentData()}
+          rowKey="id"
+          loading={loading}
+          pagination={{
+            pageSize: 10,
+            showSizeChanger: true,
+            showQuickJumper: true,
+            showTotal: (total, range) => 
+              `第 ${range[0]}-${range[1]} 条，共 ${total} 条`
+          }}
+          size="middle"
+        />
+      </Card>
     </div>
   );
 };
