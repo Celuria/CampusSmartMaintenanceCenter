@@ -155,6 +155,74 @@ export const repairService = {
   getRepairmen: async () => {
     return Object.values(REPAIRMEN);
   },
+
+  // 分配维修人员
+  assignRepairman: async (orderId, repairmanId) => {
+    const orderIndex = mockRepairOrders.findIndex(order => order.id === parseInt(orderId));
+    if (orderIndex === -1) {
+      throw new Error('工单不存在');
+    }
+    
+    const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
+    mockRepairOrders[orderIndex].repairmanId = repairmanId;
+    mockRepairOrders[orderIndex].status = 'processing';
+    mockRepairOrders[orderIndex].assigned_at = now;
+    mockRepairOrders[orderIndex].updatedAt = now;
+    
+    return mockRepairOrders[orderIndex];
+  },
+
+  // 驳回工单
+  rejectRepairOrder: async (orderId, reason) => {
+    const orderIndex = mockRepairOrders.findIndex(order => order.id === parseInt(orderId));
+    if (orderIndex === -1) {
+      throw new Error('工单不存在');
+    }
+    
+    const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
+    mockRepairOrders[orderIndex].status = 'rejected';
+    mockRepairOrders[orderIndex].rejection_reason = reason;
+    mockRepairOrders[orderIndex].updatedAt = now;
+    
+    return mockRepairOrders[orderIndex];
+  },
+
+  // 搜索工单
+  searchRepairOrders: async (filters = {}) => {
+    let data = [...mockRepairOrders];
+    
+    // 按状态筛选
+    if (filters.status && filters.status !== 'all') {
+      data = data.filter(order => order.status === filters.status);
+    }
+    
+    // 按分类筛选
+    if (filters.category && filters.category !== 'all') {
+      data = data.filter(order => order.category === filters.category);
+    }
+    
+    // 按关键词搜索（在位置和问题描述中搜索）
+    if (filters.keyword) {
+      const keyword = filters.keyword.toLowerCase();
+      data = data.filter(order => 
+        order.location.toLowerCase().includes(keyword) ||
+        order.description.toLowerCase().includes(keyword)
+      );
+    }
+    
+    // 模拟分页
+    const page = filters.page || 1;
+    const pageSize = filters.pageSize || 10;
+    const startIndex = (page - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    
+    return {
+      data: data.slice(startIndex, endIndex),
+      total: data.length,
+      page,
+      pageSize,
+    };
+  },
 };
 
 // 工具函数

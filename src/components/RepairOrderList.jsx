@@ -1,9 +1,120 @@
 // src/components/RepairOrderList.jsx
-import React from 'react';
-import { Table, Tag } from 'antd';
-import { repairUtils } from '../services/repairService';
+import React, { useState, useEffect } from 'react';
+import { 
+  Table, Tag, Button, Space, Select, Input, 
+  Modal, Form, message, Card, Row, Col 
+} from 'antd';
+import { 
+  SearchOutlined, UserOutlined, CloseOutlined, CheckOutlined 
+} from '@ant-design/icons';
+import { repairService, repairUtils } from '../services/repairService';
 
-const RepairOrderList = ({ repairOrders, loading }) => {
+const { Option } = Select;
+const { Search } = Input;
+const { confirm } = Modal;
+
+const RepairOrderList = ({ repairOrders: initialRepairOrders, loading: initialLoading }) => {
+  const [repairOrders, setRepairOrders] = useState(initialRepairOrders || []);
+  const [loading, setLoading] = useState(initialLoading || false);
+  const [filters, setFilters] = useState({
+    status: 'all',
+    category: 'all',
+    keyword: '',
+  });
+  const [assignModalVisible, setAssignModalVisible] = useState(false);
+  const [rejectModalVisible, setRejectModalVisible] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [assignForm] = Form.useForm();
+  const [rejectForm] = Form.useForm();
+
+  // 获取维修人员列表
+  const repairmen = [
+    { id: 1, name: '张师傅' },
+    { id: 2, name: '李师傅' },
+    { id: 3, name: '王师傅' },
+    { id: 4, name: '赵师傅' },
+  ];
+
+  // 搜索和筛选工单
+  const searchRepairOrders = async (searchFilters = {}) => {
+    setLoading(true);
+    try {
+      const result = await repairService.searchRepairOrders({
+        ...filters,
+        ...searchFilters,
+      });
+      setRepairOrders(result.data);
+    } catch (error) {
+      console.error('搜索工单失败:', error);
+      message.error('搜索工单失败');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 处理筛选条件变化
+  const handleFilterChange = (key, value) => {
+    const newFilters = { ...filters, [key]: value };
+    setFilters(newFilters);
+    searchRepairOrders(newFilters);
+  };
+
+  // 处理关键词搜索
+  const handleSearch = (value) => {
+    const newFilters = { ...filters, keyword: value };
+    setFilters(newFilters);
+    searchRepairOrders(newFilters);
+  };
+
+  // 打开分配模态框
+  const handleAssignClick = (order) => {
+    setSelectedOrder(order);
+    setAssignModalVisible(true);
+    assignForm.setFieldsValue({
+      repairmanId: order.repairmanId || undefined,
+    });
+  };
+
+  // 打开驳回模态框
+  const handleRejectClick = (order) => {
+    setSelectedOrder(order);
+    setRejectModalVisible(true);
+    rejectForm.resetFields();
+  };
+
+  // 处理分配维修人员
+  const handleAssignSubmit = async (values) => {
+    try {
+      await repairService.assignRepairman(selectedOrder.id, values.repairmanId);
+      message.success('工单分配成功');
+      setAssignModalVisible(false);
+      searchRepairOrders(); // 刷新数据
+    } catch (error) {
+      console.error('分配工单失败:', error);
+      message.error('分配工单失败');
+    }
+  };
+
+  // 处理驳回工单
+  const handleRejectSubmit = async (values) => {
+    try {
+      await repairService.rejectRepairOrder(selectedOrder.id, values.reason);
+      message.success('工单已驳回');
+      setRejectModalVisible(false);
+      searchRepairOrders(); // 刷新数据
+    } catch (error) {
+      console.error('驳回工单失败:', error);
+      message.error('驳回工单失败');
+    }
+  };
+
+  // 初始化加载数据
+  useEffect(() => {
+    if (initialRepairOrders) {
+      setRepairOrders(initialRepairOrders);
+    }
+  }, [initialRepairOrders]);
+
   // 表格列定义
   const columns = [
     {
@@ -66,11 +177,96 @@ const RepairOrderList = ({ repairOrders, loading }) => {
       key: 'created_at',
       width: 150,
     },
+    {
+      title: '操作',
+      key: 'action',
+      width: 200,
+      render: (_, record) => {
+        const isPending = record.status === 'pending';
+        
+        return (
+          <Space size="small">
+            {isPending && (
+              <>
+                <Button 
+                  type="primary" 
+                  size="small"
+                  icon={<CheckOutlined />}
+                  onClick={() => handleAssignClick(record)}
+                >
+                  分配
+                </Button>
+                <Button 
+                  danger 
+                  size="small"
+                  icon={<CloseOutlined />}
+                  onClick={() => handleRejectClick(record)}
+                >
+                  驳回
+                </Button>
+              </>
+            )}
+            {!isPending && (
+              <span style={{ color: '#999' }}>无操作</span>
+            )}
+          </Space>
+        );
+      },
+    },
   ];
 
   return (
     <div>
       <h2>工单管理</h2>
+      
+      {/* 搜索和筛选区域 */}
+      <Card style={{ marginBottom: 16 }}>
+        <Row gutter={16}>
+          <Col span={6}>
+            <div style={{ marginBottom: 8 }}>状态筛选</div>
+            <Select
+              style={{ width: '100%' }}
+              value={filters.status}
+              onChange={(value) => handleFilterChange('status', value)}
+            >
+              <Option value="all">全部状态</Option>
+              <Option value="pending">待受理</Option>
+              <Option value="processing">处理中</Option>
+              <Option value="completed">已完成</Option>
+              <Option value="rejected">已驳回</Option>
+            </Select>
+          </Col>
+          <Col span={6}>
+            <div style={{ marginBottom: 8 }}>分类筛选</div>
+            <Select
+              style={{ width: '100%' }}
+              value={filters.category}
+              onChange={(value) => handleFilterChange('category', value)}
+            >
+              <Option value="all">全部分类</Option>
+              <Option value="dormitory">宿舍</Option>
+              <Option value="classroom">教室</Option>
+              <Option value="public_area">公共区域</Option>
+            </Select>
+          </Col>
+          <Col span={12}>
+            <div style={{ marginBottom: 8 }}>关键词搜索</div>
+            <Search
+              placeholder="搜索位置或问题描述..."
+              allowClear
+              enterButton={<SearchOutlined />}
+              onSearch={handleSearch}
+              onChange={(e) => {
+                if (!e.target.value) {
+                  handleSearch('');
+                }
+              }}
+            />
+          </Col>
+        </Row>
+      </Card>
+
+      {/* 工单表格 */}
       <Table
         columns={columns}
         dataSource={repairOrders}
@@ -83,8 +279,84 @@ const RepairOrderList = ({ repairOrders, loading }) => {
           showTotal: (total, range) => 
             `第 ${range[0]}-${range[1]} 条，共 ${total} 条`
         }}
-        scroll={{ x: 1000 }}
+        scroll={{ x: 1200 }}
       />
+
+      {/* 分配维修人员模态框 */}
+      <Modal
+        title="分配维修人员"
+        open={assignModalVisible}
+        onCancel={() => setAssignModalVisible(false)}
+        footer={null}
+      >
+        <Form
+          form={assignForm}
+          layout="vertical"
+          onFinish={handleAssignSubmit}
+        >
+          <Form.Item
+            label="选择维修人员"
+            name="repairmanId"
+            rules={[{ required: true, message: '请选择维修人员!' }]}
+          >
+            <Select placeholder="请选择维修人员">
+              {repairmen.map(repairman => (
+                <Option key={repairman.id} value={repairman.id}>
+                  <Space>
+                    <UserOutlined />
+                    {repairman.name}
+                  </Space>
+                </Option>
+              ))}
+            </Select>
+          </Form.Item>
+          <Form.Item>
+            <Space>
+              <Button type="primary" htmlType="submit">
+                确认分配
+              </Button>
+              <Button onClick={() => setAssignModalVisible(false)}>
+                取消
+              </Button>
+            </Space>
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      {/* 驳回工单模态框 */}
+      <Modal
+        title="驳回工单"
+        open={rejectModalVisible}
+        onCancel={() => setRejectModalVisible(false)}
+        footer={null}
+      >
+        <Form
+          form={rejectForm}
+          layout="vertical"
+          onFinish={handleRejectSubmit}
+        >
+          <Form.Item
+            label="驳回原因"
+            name="reason"
+            rules={[{ required: true, message: '请输入驳回原因!' }]}
+          >
+            <Input.TextArea 
+              rows={4} 
+              placeholder="请输入驳回此工单的原因..."
+            />
+          </Form.Item>
+          <Form.Item>
+            <Space>
+              <Button type="primary" danger htmlType="submit">
+                确认驳回
+              </Button>
+              <Button onClick={() => setRejectModalVisible(false)}>
+                取消
+              </Button>
+            </Space>
+          </Form.Item>
+        </Form>
+      </Modal>
     </div>
   );
 };

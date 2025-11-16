@@ -19,13 +19,18 @@ import { repairService } from '../services/repairService';
 const { Sider, Content, Header } = Layout;
 
 const AdminHome = () => {
-  const [currentMenu, setCurrentMenu] = useState('user-management');
+  const [currentMenu, setCurrentMenu] = useState('data-analysis');
   const [repairOrders, setRepairOrders] = useState([]);
   const [loading, setLoading] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
 
   // 侧边栏菜单配置
   const sideMenuItems = [
+    {
+      key: 'data-analysis',
+      icon: <BarChartOutlined />,
+      label: '数据统计与分析',
+    },
     {
       key: 'user-management',
       icon: <UserSwitchOutlined />,
@@ -40,11 +45,6 @@ const AdminHome = () => {
       key: 'feedback-management',
       icon: <StarOutlined />,
       label: '评价管理',
-    },
-    {
-      key: 'data-analysis',
-      icon: <BarChartOutlined />,
-      label: '数据统计与分析',
     },
   ];
 

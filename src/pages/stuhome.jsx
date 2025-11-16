@@ -128,7 +128,7 @@ const Home = () => {
           alignItems: 'center'
         }}>
           <div style={{ fontSize: '16px', fontWeight: 'bold' }}>
-            学生工作台
+            智能报修平台
           </div>
           
           <Space size="middle">
