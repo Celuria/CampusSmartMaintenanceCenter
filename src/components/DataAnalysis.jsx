@@ -1,7 +1,7 @@
 // src/components/DataAnalysis.jsx
 import React, { useState, useEffect } from 'react';
 import { Row, Col, Card, Table, Tag, Spin, Space } from 'antd';
-import { Pie, Column } from '@ant-design/charts';
+import { Pie, Column } from '@ant-design/charts';//npm install @ant-design/charts
 import { statisticsService } from '../services/statisticsService';
 
 const DataAnalysis = () => {

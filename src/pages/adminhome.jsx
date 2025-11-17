@@ -1,19 +1,22 @@
 // src/pages/AdminHome.jsx
 import React, { useState, useEffect } from 'react';
 import { 
-  Layout, Menu, Avatar, Space 
+  Layout, Menu, Avatar, Space, Dropdown, message 
 } from 'antd';
 import { 
   UserOutlined, 
   UserSwitchOutlined, 
   FileTextOutlined, 
   StarOutlined, 
-  BarChartOutlined 
+  BarChartOutlined,
+  EditOutlined,
+  LogoutOutlined
 } from '@ant-design/icons';
 import RepairOrderList from '../components/RepairOrderList';
 import UserManagement from '../components/UserManagement';
 import DataAnalysis from '../components/DataAnalysis';
 import FeedbackManagement from '../components/FeedbackManagement';
+import PersonalInfoEd from '../model/PersonalInfoEd'; // 导入个人信息编辑组件
 import { repairService } from '../services/repairService';
 
 const { Sider, Content, Header } = Layout;
@@ -23,6 +26,18 @@ const AdminHome = () => {
   const [repairOrders, setRepairOrders] = useState([]);
   const [loading, setLoading] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
+  
+  // 新增状态：控制个人信息编辑弹窗显示
+  const [personalInfoModalVisible, setPersonalInfoModalVisible] = useState(false);
+  
+  // 新增状态：当前管理员信息
+  const [currentAdmin, setCurrentAdmin] = useState({
+    username: 'admin',
+    email: 'admin@manage.edu.cn',
+    phone: '',
+    department: '系统管理部',
+    position: '系统管理员'
+  });
 
   // 侧边栏菜单配置
   const sideMenuItems = [
@@ -48,10 +63,51 @@ const AdminHome = () => {
     },
   ];
 
+  // 头像下拉菜单项
+  const avatarMenuItems = [
+    {
+      key: 'edit-profile',
+      icon: <EditOutlined />,
+      label: '编辑个人信息',
+    },
+    {
+      type: 'divider',
+    },
+    {
+      key: 'logout',
+      icon: <LogoutOutlined />,
+      label: '退出登录',
+      danger: true,
+    },
+  ];
+
   // 处理菜单点击
   const handleMenuClick = (e) => {
     console.log('点击了菜单:', e.key);
     setCurrentMenu(e.key);
+  };
+
+  // 处理头像下拉菜单点击
+  const handleAvatarMenuClick = (e) => {
+    if (e.key === 'edit-profile') {
+      console.log('点击了编辑个人信息');
+      // 打开个人信息编辑弹窗
+      setPersonalInfoModalVisible(true);
+    } else if (e.key === 'logout') {
+      // 处理退出登录
+      console.log('退出登录');
+      message.info('已退出登录');
+      // 这里可以添加退出登录的逻辑，比如清除token、跳转到登录页等
+      // window.location.href = '/login'; // 实际项目中可能需要路由跳转
+    }
+  };
+
+  // 处理个人信息更新
+  const handleAdminInfoUpdate = (updatedInfo) => {
+    setCurrentAdmin(updatedInfo);
+    message.success('个人信息更新成功！');
+    // 在实际项目中，这里可以调用API将更新后的信息保存到后端
+    console.log('更新后的管理员信息:', updatedInfo);
   };
 
   // 获取工单数据
@@ -62,6 +118,7 @@ const AdminHome = () => {
       setRepairOrders(result.data);
     } catch (error) {
       console.error('获取工单数据失败:', error);
+      message.error('获取工单数据失败');
     } finally {
       setLoading(false);
     }
@@ -81,6 +138,14 @@ const AdminHome = () => {
         collapsed={collapsed} 
         onCollapse={setCollapsed}
         theme="dark"
+        style={{
+          position: 'fixed',
+          zIndex: 1,
+          height: '100vh',
+          left: 0,
+          top: 0,
+          bottom: 0
+        }}
       >
         <div style={{ 
           height: '32px', 
@@ -113,21 +178,36 @@ const AdminHome = () => {
           boxShadow: '0 1px 4px rgba(0,21,41,0.08)',
           display: 'flex',
           justifyContent: 'space-between',
-          alignItems: 'center'
+          alignItems: 'center',
+          position: 'fixed',
+          left: collapsed ? 80 : 200,
+          zIndex: 1,
+          right: 0,
+          top: 0
         }}>
           <div style={{ fontSize: '16px', fontWeight: 'bold' }}>
             管理员工作台
           </div>
           
           <Space size="middle">
-            <span>欢迎，管理员</span>
-            <Avatar 
-              size="default" 
-              icon={<UserOutlined />}
-              style={{ 
-                backgroundColor: '#fa541c'
+            <span>欢迎，{currentAdmin.username}</span>
+            <Dropdown
+              menu={{
+                items: avatarMenuItems,
+                onClick: handleAvatarMenuClick,
               }}
-            />
+              placement="bottomRight"
+              arrow
+            >
+              <Avatar 
+                size="default" 
+                icon={<UserOutlined />}
+                style={{ 
+                  cursor: 'pointer',
+                  backgroundColor: '#fa541c'
+                }}
+              />
+            </Dropdown>
           </Space>
         </Header>
 
@@ -136,7 +216,11 @@ const AdminHome = () => {
           margin: '24px 16px', 
           padding: 24, 
           background: '#fff',
-          minHeight: 280 
+          minHeight: 280 ,
+          right:0,
+          left: collapsed ? 80 : 200,
+          top:64,
+          position:'absolute'
         }}>
           {currentMenu === 'user-management' && (
             <UserManagement />
@@ -155,6 +239,14 @@ const AdminHome = () => {
           )}
         </Content>
       </Layout>
+
+      {/* 个人信息编辑弹窗 */}
+      <PersonalInfoEd
+        visible={personalInfoModalVisible}
+        onCancel={() => setPersonalInfoModalVisible(false)}
+        userInfo={currentAdmin}
+        onUpdate={handleAdminInfoUpdate}
+      />
     </Layout>
   );
 };

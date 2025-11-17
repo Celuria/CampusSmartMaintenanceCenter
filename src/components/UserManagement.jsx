@@ -1,5 +1,5 @@
 // src/components/UserManagement.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState} from 'react';
 import { Card, Table, Space, Select, Row, Col, Statistic, Tag } from 'antd';
 import { UserOutlined, ToolOutlined, TeamOutlined, PhoneOutlined } from '@ant-design/icons';
 
@@ -11,20 +11,20 @@ const UserManagement = () => {
 
   // 模拟学生账号数据
   const studentAccounts = [
-    { id: '20210001', nickname: '张三', phone: '13800138001' },
-    { id: '20210002', nickname: '李四', phone: '13800138002' },
-    { id: '20210003', nickname: '王五', phone: '13800138003' },
-    { id: '20210004', nickname: '赵六', phone: '13800138004' },
-    { id: '20210005', nickname: '钱七', phone: '13800138005' },
-    { id: '20210006', nickname: '孙八', phone: '13800138006' }
+    { id: '20210001', stunumber:"001", username: 'zhangsan', nickname: '张三', phone: '13800138001' },
+    { id: '20210002', stunumber:"002", username: 'lisi', nickname: '李四', phone: '13800138002' },
+    { id: '20210003', stunumber:"003", username: 'wangwu', nickname: '王五', phone: '13800138003' },
+    { id: '20210004', stunumber:"004", username: 'zhaoliu', nickname: '赵六', phone: '13800138004' },
+    { id: '20210005', stunumber:"005", username: 'qianqi', nickname: '钱七', phone: '13800138005' },
+    { id: '20210006', stunumber:"006", username: 'sunba', nickname: '孙八', phone: '13800138006' }
   ];
 
   // 模拟维修人员账号数据
   const repairmanAccounts = [
-    { id: 'worker001', nickname: '张师傅', phone: '13900139001' },
-    { id: 'worker002', nickname: '李师傅', phone: '13900139002' },
-    { id: 'worker003', nickname: '王师傅', phone: '13900139003' },
-    { id: 'worker004', nickname: '赵师傅', phone: '13900139004' }
+    { id: 'worker001', workernumber:"001", username: 'zhangshifu', nickname: '张师傅', phone: '13900139001' },
+    { id: 'worker002', workernumber:"002", username: 'lishifu', nickname: '李师傅', phone: '13900139002' },
+    { id: 'worker003', workernumber:"003", username: 'wangshifu', nickname: '王师傅', phone: '13900139003' },
+    { id: 'worker004', workernumber:"004", username: 'zhaoshifu', nickname: '赵师傅', phone: '13900139004' }
   ];
 
   // 处理下拉菜单选择
@@ -57,6 +57,18 @@ const UserManagement = () => {
           </span>
         </Space>
       ),
+    },
+    {
+      title: '学号/工号',
+      dataIndex: currentUserType === 'students' ? 'stunumber' : 'workernumber',
+      key: 'number',
+      width: 150,
+    },
+    {
+      title: '用户名',
+      dataIndex: 'username',
+      key: 'username',
+      width: 150,
     },
     {
       title: '昵称',
