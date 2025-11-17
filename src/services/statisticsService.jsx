@@ -36,3 +36,24 @@ export const statisticsService = {
     ];
   },
 };
+
+// 后端 API 封装：提供统计相关的后端接口调用
+export const statisticsApi = {
+  async fetchRepairCategoryStats() {
+    const res = await fetch('/api/stats/repairCategories', { method: 'GET' });
+    if (!res.ok) throw new Error(`fetchRepairCategoryStats failed: ${res.status}`);
+    return res.json();
+  },
+
+  async fetchLocationRepairStats() {
+    const res = await fetch('/api/stats/locationRepairs', { method: 'GET' });
+    if (!res.ok) throw new Error(`fetchLocationRepairStats failed: ${res.status}`);
+    return res.json();
+  },
+
+  async fetchRepairmanRatingStats() {
+    const res = await fetch('/api/stats/repairmanRatings', { method: 'GET' });
+    if (!res.ok) throw new Error(`fetchRepairmanRatingStats failed: ${res.status}`);
+    return res.json();
+  },
+};

@@ -260,3 +260,44 @@ export const repairUtils = {
     return repairmen[repairmanId] || null;
   },
 };
+
+// HTTP API 替代/补充接口：不修改现有静态数据，提供调用后端 REST API 的封装函数
+export const repairApi = {
+  // 查询工单列表：params 会被转为查询字符串
+  async fetchRepairOrders(params = {}) {
+    const qs = new URLSearchParams(params).toString();
+    const url = `/api/repairOrders${qs ? `?${qs}` : ''}`;
+    const res = await fetch(url, { method: 'GET' });
+    if (!res.ok) throw new Error(`fetchRepairOrders failed: ${res.status}`);
+    return res.json();
+  },
+
+  // 根据 ID 获取单个工单
+  async fetchRepairOrderById(id) {
+    const res = await fetch(`/api/repairOrders/${id}`, { method: 'GET' });
+    if (!res.ok) throw new Error(`fetchRepairOrderById failed: ${res.status}`);
+    return res.json();
+  },
+
+  // 分配维修人员到工单
+  async assignRepairmanApi(orderId, repairmanId) {
+    const res = await fetch(`/api/repairOrders/${orderId}/assign`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ repairmanId }),
+    });
+    if (!res.ok) throw new Error(`assignRepairmanApi failed: ${res.status}`);
+    return res.json();
+  },
+
+  // 驳回工单
+  async rejectRepairOrderApi(orderId, reason) {
+    const res = await fetch(`/api/repairOrders/${orderId}/reject`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reason }),
+    });
+    if (!res.ok) throw new Error(`rejectRepairOrderApi failed: ${res.status}`);
+    return res.json();
+  },
+};

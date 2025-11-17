@@ -62,3 +62,18 @@ export const userService = {
     ];
   },
 };
+
+// 后端 API 封装：提供实际后端用户数据的调用
+export const userApi = {
+  async fetchStudentAccounts() {
+    const res = await fetch('/api/users/students', { method: 'GET' });
+    if (!res.ok) throw new Error(`fetchStudentAccounts failed: ${res.status}`);
+    return res.json();
+  },
+
+  async fetchRepairmanAccounts() {
+    const res = await fetch('/api/users/repairmen', { method: 'GET' });
+    if (!res.ok) throw new Error(`fetchRepairmanAccounts failed: ${res.status}`);
+    return res.json();
+  },
+};

@@ -1,50 +1,65 @@
 // 在学生端的 Home.jsx 中更新"我的报修"部分
-import React, { useState ,useEffect} from 'react';
-import { 
-  Layout, Menu, Avatar, Space, Form, Input, Select, Button, message, Card, Dropdown 
-} from 'antd';
-import { 
-  UserOutlined, EditOutlined, AppstoreOutlined, PlusOutlined 
-} from '@ant-design/icons';
-import MyRepairs from '../components/MyRepairs'; // 导入新的组件
-import { repairService } from '../services/repairService';
-import PersonalInfoEd from '../model/PersonalInfoEd'; // 导入个人信息编辑组件
+import React, { useState, useEffect } from "react";
+import {
+  Layout,
+  Menu,
+  Avatar,
+  Space,
+  Form,
+  Input,
+  Select,
+  Button,
+  message,
+  Card,
+  Dropdown,
+} from "antd";
+import {
+  UserOutlined,
+  EditOutlined,
+  AppstoreOutlined,
+  PlusOutlined,
+} from "@ant-design/icons";
+import MyRepairs from "../components/MyRepairs"; // 导入新的组件
+import { repairService } from "../services/repairService";
+import PersonalInfoEd from "../model/PersonalInfoEd"; // 导入个人信息编辑组件
+
 
 const { Sider, Content, Header } = Layout;
 const { Option } = Select;
 const { TextArea } = Input;
 
 const Home = () => {
-  const [currentMenu, setCurrentMenu] = useState('my-repairs');
+  const [currentMenu, setCurrentMenu] = useState("my-repairs");
   const [collapsed, setCollapsed] = useState(false);
   const [repairOrders, setRepairOrders] = useState([]);
   const [loading, setLoading] = useState(false);
   const [form] = Form.useForm();
-  
+
   // 新增状态：控制个人信息编辑弹窗显示
-  const [personalInfoModalVisible, setPersonalInfoModalVisible] = useState(false);
-  
+  const [personalInfoModalVisible, setPersonalInfoModalVisible] =
+    useState(false);
+
   // 新增状态：当前用户信息
   const [currentUser, setCurrentUser] = useState({
-    username: 'stu', // 从登录信息获取
-    email: 'stu@student.edu.cn',
-    phone: '',
-    department: '计算机学院',
-    position: '学生',
-    studentID: '001' // 学生学号
+    username: "stu", // 从登录信息获取
+    email: "stu@student.edu.cn",
+    phone: "",
+    department: "计算机学院",
+    position: "学生",
+    studentID: "001", // 学生学号
   });
 
   // 侧边栏菜单配置
   const sideMenuItems = [
     {
-      key: 'my-repairs',
+      key: "my-repairs",
       icon: <AppstoreOutlined />,
-      label: '我的报修',
+      label: "我的报修",
     },
     {
-      key: 'create-repair',
+      key: "create-repair",
       icon: <PlusOutlined />,
-      label: '创建报修申请',
+      label: "创建报修申请",
     },
   ];
 
@@ -52,7 +67,7 @@ const Home = () => {
     // 初始加载我的报修记录
     fetchMyRepairs();
   }, []);
- 
+
   // 获取我的报修记录
   const fetchMyRepairs = async () => {
     setLoading(true);
@@ -62,7 +77,7 @@ const Home = () => {
       const result = await repairService.getRepairOrders();
       setRepairOrders(result.data);
     } catch (error) {
-      console.error('获取报修记录失败:', error);
+      console.error("获取报修记录失败:", error);
     } finally {
       setLoading(false);
     }
@@ -70,21 +85,21 @@ const Home = () => {
 
   // 处理侧边栏菜单点击
   const handleSideMenuClick = (e) => {
-    console.log('点击了侧边栏菜单:', e.key);
+    console.log("点击了侧边栏菜单:", e.key);
     setCurrentMenu(e.key);
   };
 
   // 完善：处理头像下拉菜单点击
   const handleAvatarMenuClick = (e) => {
-    if (e.key === 'edit-profile') {
-      console.log('点击了编辑基本信息');
+    if (e.key === "edit-profile") {
+      console.log("点击了编辑基本信息");
       // 打开个人信息编辑弹窗
       setPersonalInfoModalVisible(true);
-    } else if (e.key === 'logout') {
+    } else if (e.key === "logout") {
       // 处理退出登录
-      console.log('退出登录');
+      console.log("退出登录");
       // 这里可以添加退出登录的逻辑，比如清除token、跳转到登录页等
-      message.info('已退出登录');
+      message.info("已退出登录");
       // window.location.href = '/login'; // 实际项目中可能需要路由跳转
     }
   };
@@ -92,88 +107,89 @@ const Home = () => {
   // 新增：处理个人信息更新
   const handleUserInfoUpdate = (updatedInfo) => {
     setCurrentUser(updatedInfo);
-    message.success('个人信息更新成功！');
+    message.success("个人信息更新成功！");
     // 在实际项目中，这里可以调用API将更新后的信息保存到后端
-    console.log('更新后的用户信息:', updatedInfo);
+    console.log("更新后的用户信息:", updatedInfo);
   };
 
   // 处理表单提交
   const handleFormSubmit = async (values) => {
     try {
-      console.log('表单提交:', values);
-      
+      console.log("表单提交:", values);
+
       // 添加学生ID到报修数据中
       const repairData = {
         ...values,
-        studentID: currentUser.studentID // 使用当前用户的学生ID
+        studentID: currentUser.studentID, // 使用当前用户的学生ID
       };
-      
+
       // 调用服务创建报修订单
       await repairService.createRepairOrder(repairData);
-      
-      message.success('报修申请提交成功！');
+
+      message.success("报修申请提交成功！");
       form.resetFields(); // 重置表单
-      
+
       // 刷新报修记录列表
       fetchMyRepairs();
       // 切换到我的报修页面
-      setCurrentMenu('my-repairs');
-      
+      setCurrentMenu("my-repairs");
     } catch (error) {
-      console.error('提交报修申请失败:', error);
-      message.error('提交报修申请失败，请重试');
+      console.error("提交报修申请失败:", error);
+      message.error("提交报修申请失败，请重试");
     }
   };
 
   // 完善：头像下拉菜单项
   const avatarMenuItems = [
     {
-      key: 'edit-profile',
+      key: "edit-profile",
       icon: <EditOutlined />,
-      label: '编辑个人信息',
+      label: "编辑个人信息",
     },
     {
-      type: 'divider',
+      type: "divider",
     },
     {
-      key: 'logout',
+      key: "logout",
       icon: <UserOutlined />,
-      label: '退出登录',
+      label: "退出登录",
       danger: true,
     },
   ];
 
   return (
-    <Layout style={{ height: '100vh' }}>
+    <Layout style={{ height: "100vh" }}>
       {/* 侧边栏 */}
-      <Sider 
-        collapsible 
-        collapsed={collapsed} 
+      <Sider
+        collapsible
+        collapsed={collapsed}
         onCollapse={setCollapsed}
         theme="dark"
         style={{
-          position: 'fixed',
+          position: "fixed",
           zIndex: 1,
-          height: '100vh',
+          height: "100vh",
           left: 0,
           top: 0,
-          bottom: 0
+          bottom: 0,
         }}
       >
-        <div style={{ 
-          height: '32px', 
-          margin: '16px', 
-          background: 'rgba(255, 255, 255, 0.3)',
-          borderRadius: '6px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: 'white',
-          fontWeight: 'bold'
-        }}>
-          {collapsed ? '学生' : '学生报修系统'}
+        <div
+          style={{
+            height: "32px",
+            margin: "16px",
+            background: "rgba(255, 255, 255, 0.3)",
+            borderRadius: "6px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            color: "white",
+            fontWeight: "bold",
+          }}
+        >
+          {collapsed ? "学生" : "学生报修系统"}
         </div>
-        
+
         <Menu
           theme="dark"
           selectedKeys={[currentMenu]}
@@ -185,23 +201,25 @@ const Home = () => {
 
       <Layout>
         {/* 顶部Header */}
-        <Header style={{ 
-          padding: '0 24px', 
-          background: '#fff', 
-          boxShadow: '0 1px 4px rgba(0,21,41,0.08)',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          position: 'fixed',
-          left: collapsed ? 80 : 200,
-          zIndex: 1,
-          right: 0,
-          top: 0
-        }}>
-          <div style={{ fontSize: '16px', fontWeight: 'bold' }}>
+        <Header
+          style={{
+            padding: "0 24px",
+            background: "#fff",
+            boxShadow: "0 1px 4px rgba(0,21,41,0.08)",
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            position: "fixed",
+            left: collapsed ? 80 : 200,
+            zIndex: 1,
+            right: 0,
+            top: 0,
+          }}
+        >
+          <div style={{ fontSize: "16px", fontWeight: "bold" }}>
             智能报修平台
           </div>
-          
+
           <Space size="middle">
             <span>欢迎，{currentUser.username}</span>
             <Dropdown
@@ -212,12 +230,12 @@ const Home = () => {
               placement="bottomRight"
               arrow
             >
-              <Avatar 
-                size="default" 
+              <Avatar
+                size="default"
                 icon={<UserOutlined />}
-                style={{ 
-                  cursor: 'pointer',
-                  backgroundColor: '#1890ff'
+                style={{
+                  cursor: "pointer",
+                  backgroundColor: "#1890ff",
                 }}
               />
             </Dropdown>
@@ -225,34 +243,39 @@ const Home = () => {
         </Header>
 
         {/* 内容区域 */}
-        <Content style={{ 
-          margin: '24px 16px', 
-          padding: 24, 
-          background: '#fff',
-          minHeight: 280 ,
-          right:0,
-          left: collapsed ? 80 : 200,
-          top:64,
-          position:'fixed'
-        }}>
-          {currentMenu === 'my-repairs' && (
+        <Content
+          style={{
+            margin: "24px 16px",
+            padding: 24,
+            background: "#fff",
+            minHeight: 280,
+            right: 0,
+            left: collapsed ? 80 : 200,
+            top: 64,
+            bottom: 64,
+            position: "fixed",
+          }}
+        >
+          {currentMenu === "my-repairs" && (
             <MyRepairs repairOrders={repairOrders} loading={loading} />
           )}
-          
-          {currentMenu === 'create-repair' && (
-            <div style={{ 
-              display: 'flex', 
-              justifyContent: 'center',
-              alignItems: 'flex-start'
-            }}>
-              <Card 
-                title="创建报修申请" 
-                style={{ 
-                  width: '100%', 
-                  maxWidth: '800px',
-                  boxShadow: '0 4px 8px rgba(0,0,0,0.1)'
+
+          {currentMenu === "create-repair" && (
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "flex-start",
+              }}
+            >
+              <Card
+                title="创建报修申请"
+                style={{
+                  width: "100%",
+                  maxWidth: "800px",
+                  boxShadow: "0 4px 8px rgba(0,0,0,0.1)",
                 }}
-                headStyle={{ fontSize: '20px', fontWeight: 'bold' }}
+                headStyle={{ fontSize: "20px", fontWeight: "bold" }}
               >
                 <Form
                   form={form}
@@ -263,7 +286,7 @@ const Home = () => {
                   <Form.Item
                     label="报修分类"
                     name="category"
-                    rules={[{ required: true, message: '请选择报修分类!' }]}
+                    rules={[{ required: true, message: "请选择报修分类!" }]}
                   >
                     <Select placeholder="请选择报修分类" size="large">
                       <Option value="dormitory">宿舍</Option>
@@ -275,7 +298,7 @@ const Home = () => {
                   <Form.Item
                     label="具体位置"
                     name="location"
-                    rules={[{ required: true, message: '请输入具体位置!' }]}
+                    rules={[{ required: true, message: "请输入具体位置!" }]}
                   >
                     <Input placeholder="例如：3栋502寝室" size="large" />
                   </Form.Item>
@@ -283,38 +306,40 @@ const Home = () => {
                   <Form.Item
                     label="问题描述"
                     name="description"
-                    rules={[{ required: true, message: '请输入问题描述!' }]}
+                    rules={[{ required: true, message: "请输入问题描述!" }]}
                   >
-                    <TextArea 
-                      rows={6} 
-                      placeholder="请详细描述您遇到的问题..." 
+                    <TextArea
+                      rows={6}
+                      placeholder="请详细描述您遇到的问题..."
                       maxLength={500}
                       showCount
                       size="large"
                     />
                   </Form.Item>
 
-                  <Form.Item style={{ 
-                    textAlign: 'center',
-                    marginTop: '32px'
-                  }}>
-                    <Button 
-                      type="primary" 
+                  <Form.Item
+                    style={{
+                      textAlign: "center",
+                      marginTop: "32px",
+                    }}
+                  >
+                    <Button
+                      type="primary"
                       htmlType="submit"
                       size="large"
-                      style={{ 
-                        width: '150px',
-                        height: '40px',
-                        marginRight: '16px'
+                      style={{
+                        width: "150px",
+                        height: "40px",
+                        marginRight: "16px",
                       }}
                     >
                       提交报修申请
                     </Button>
-                    <Button 
+                    <Button
                       size="large"
-                      style={{ 
-                        width: '100px',
-                        height: '40px'
+                      style={{
+                        width: "100px",
+                        height: "40px",
                       }}
                       onClick={() => form.resetFields()}
                     >

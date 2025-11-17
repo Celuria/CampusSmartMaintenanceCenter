@@ -391,3 +391,41 @@ export const mytaskUtils = {
     return currentTime > estimatedTime;
   },
 };
+
+// 后端 API 封装：保留 mock 数据不变，提供 fetch 调用接口
+export const mytaskApi = {
+  // 获取维修工人的任务列表
+  async fetchMyTasks(repairmanId, params = {}) {
+    const qs = new URLSearchParams(params).toString();
+    const url = `/api/mytasks/${repairmanId}${qs ? `?${qs}` : ''}`;
+    const res = await fetch(url, { method: 'GET' });
+    if (!res.ok) throw new Error(`fetchMyTasks failed: ${res.status}`);
+    return res.json();
+  },
+
+  async fetchTaskById(repairmanId, taskId) {
+    const res = await fetch(`/api/mytasks/${repairmanId}/${taskId}`, { method: 'GET' });
+    if (!res.ok) throw new Error(`fetchTaskById failed: ${res.status}`);
+    return res.json();
+  },
+
+  async startTaskApi(repairmanId, taskId, estimatedTime = null) {
+    const res = await fetch(`/api/mytasks/${repairmanId}/${taskId}/start`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ estimatedTime }),
+    });
+    if (!res.ok) throw new Error(`startTaskApi failed: ${res.status}`);
+    return res.json();
+  },
+
+  async completeTaskApi(repairmanId, taskId, completionNotes = '') {
+    const res = await fetch(`/api/mytasks/${repairmanId}/${taskId}/complete`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ completionNotes }),
+    });
+    if (!res.ok) throw new Error(`completeTaskApi failed: ${res.status}`);
+    return res.json();
+  },
+};

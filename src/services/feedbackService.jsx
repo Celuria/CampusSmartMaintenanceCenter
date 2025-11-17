@@ -58,3 +58,18 @@ export const feedbackService = {
     return repairmen[repairmanId] || { id: repairmanId, name: '未知维修工' };
   },
 };
+
+// 后端 API 封装
+export const feedbackApi = {
+  async fetchAllFeedbacks() {
+    const res = await fetch('/api/feedbacks', { method: 'GET' });
+    if (!res.ok) throw new Error(`fetchAllFeedbacks failed: ${res.status}`);
+    return res.json();
+  },
+
+  async deleteFeedbackApi(feedbackId) {
+    const res = await fetch(`/api/feedbacks/${feedbackId}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error(`deleteFeedbackApi failed: ${res.status}`);
+    return res.json();
+  },
+};

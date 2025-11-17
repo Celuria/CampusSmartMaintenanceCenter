@@ -1,11 +1,17 @@
 // src/components/MyRepairs.jsx
 import React from 'react';
-import { Table, Tag } from 'antd';
+import { Table, Tag ,Button} from 'antd';
 import { repairUtils } from '../services/repairService';
 
 const MyRepairs = ({ repairOrders, loading }) => {
   // 表格列定义
   const columns = [
+    {
+      title: '报修单号',
+      dataIndex: 'id',
+      key: 'id',
+      width: 120,
+    },
     {
       title: '报修分类',
       dataIndex: 'category',
@@ -44,12 +50,26 @@ const MyRepairs = ({ repairOrders, loading }) => {
         return <Tag color={statusInfo.color}>{statusInfo.label}</Tag>;
       },
     },
+    {
+      title:'操作',
+      key:'action',
+      width:100,
+      render:(_,record)=>(
+        <Button type="link" onClick={()=>{
+          // 这里可以添加查看详情的逻辑
+          alert(`查看报修单详情：${record.id}`);
+        }}>查看详情</Button>
+      )
+    }
   ];
 
   return (
     <div>
       <h2>我的报修</h2>
       <Table
+      style={{
+        height:'80vh',
+      }}
         columns={columns}
         dataSource={repairOrders}
         rowKey="id"
