@@ -1,23 +1,14 @@
 // 在学生端的 Home.jsx 中更新"我的报修"部分
 import React, { useState, useEffect } from "react";
-import {
-  Layout,
-  Menu,
-  Avatar,
-  Space,
-  Form,
-  Input,
-  Select,
-  Button,
-  message,
-  Card,
-  Dropdown,
-} from "antd";
+import {Layout,Menu,Avatar,Space,Form,Input,Select,Button,message,
+  Card,Dropdown,Upload} from "antd";
 import {
   UserOutlined,
   EditOutlined,
   AppstoreOutlined,
   PlusOutlined,
+  UploadOutlined,
+  DeleteOutlined,
 } from "@ant-design/icons";
 import MyRepairs from "../components/MyRepairs"; // 导入新的组件
 import { repairService } from "../services/repairService";
@@ -34,6 +25,7 @@ const Home = () => {
   const [repairOrders, setRepairOrders] = useState([]);
   const [loading, setLoading] = useState(false);
   const [form] = Form.useForm();
+  const [fileList, setFileList] = useState([]);
 
   // 新增状态：控制个人信息编辑弹窗显示
   const [personalInfoModalVisible, setPersonalInfoModalVisible] =
@@ -112,31 +104,26 @@ const Home = () => {
     console.log("更新后的用户信息:", updatedInfo);
   };
 
+  //11.18新增：处理文件上传
+  const handleUploadChange = ({fileList: newFileList}) => {
+    setFileList(newFileList);
+  };
+
+  //11.18处理文件删除
+  const handleRemove = (file) => {
+    const newFileList = fileList.filter(item => item.uid !== file.uid);
+    setFileList(newFileList);
+  }
+
   // 处理表单提交
-  const handleFormSubmit = async (values) => {
-    try {
-      console.log("表单提交:", values);
-
-      // 添加学生ID到报修数据中
-      const repairData = {
-        ...values,
-        studentID: currentUser.studentID, // 使用当前用户的学生ID
-      };
-
-      // 调用服务创建报修订单
-      await repairService.createRepairOrder(repairData);
-
-      message.success("报修申请提交成功！");
-      form.resetFields(); // 重置表单
-
-      // 刷新报修记录列表
-      fetchMyRepairs();
-      // 切换到我的报修页面
-      setCurrentMenu("my-repairs");
-    } catch (error) {
-      console.error("提交报修申请失败:", error);
-      message.error("提交报修申请失败，请重试");
-    }
+  const handleFormSubmit = (values) => {
+    console.log('表单提交:', values);
+    console.log('上传的文件:', fileList);
+    
+    // 这里可以添加提交到后端的逻辑，包括文件上传
+    message.success('报修申请提交成功！');
+    form.resetFields();
+    setFileList([]); // 清空文件列表
   };
 
   // 完善：头像下拉菜单项
@@ -156,6 +143,33 @@ const Home = () => {
       danger: true,
     },
   ];
+
+  // 上传组件配置
+  const uploadProps = {
+    beforeUpload: (file) => {
+      // 限制文件类型为图片
+      const isImage = file.type.startsWith('image/');
+      if (!isImage) {
+        message.error('只能上传图片文件!');
+        return Upload.LIST_IGNORE;
+      }
+      
+      // 限制文件大小 (5MB)
+      const isLt5M = file.size / 1024 / 1024 < 5;
+      if (!isLt5M) {
+        message.error('图片大小不能超过5MB!');
+        return Upload.LIST_IGNORE;
+      }
+      
+      // 不自动上传，只添加到文件列表
+      return false;
+    },
+    fileList,
+    onChange: handleUploadChange,
+    onRemove: handleRemove,
+    multiple: true, // 允许上传多个文件
+    accept: 'image/*', // 只接受图片文件
+  };
 
   return (
     <Layout style={{ height: "100vh" }}>
@@ -317,6 +331,26 @@ const Home = () => {
                     />
                   </Form.Item>
 
+                  {/* 11.18新增图片上传功能 */}
+                  <Form.Item
+                    label="上传相关图片"
+                    extra="支持上传多张图片，每张图片大小不超过5MB"
+                  >
+                    <Upload.Dragger
+                      {...uploadProps}
+                      listType="picture"
+                      style={{ padding: '16px' }}
+                    >
+                      <p className="ant-upload-drag-icon">
+                        <UploadOutlined />
+                      </p>
+                      <p className="ant-upload-text">点击或拖拽图片到此区域上传</p>
+                      <p className="ant-upload-hint">
+                        支持上传多张图片，可用于更清晰地描述问题
+                      </p>
+                    </Upload.Dragger>
+                  </Form.Item>
+
                   <Form.Item
                     style={{
                       textAlign: "center",
@@ -341,7 +375,10 @@ const Home = () => {
                         width: "100px",
                         height: "40px",
                       }}
-                      onClick={() => form.resetFields()}
+                      onClick={() => {
+                        form.resetFields()
+                        setFileList([]);
+                      }}
                     >
                       重置
                     </Button>

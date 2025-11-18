@@ -1,14 +1,13 @@
 // src/components/FeedbackManagement.jsx
 import React, { useState, useEffect } from 'react';
-import { Card, Rate, Button, Space, Tag, Modal, message, List, Popconfirm } from 'antd';
-import { DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
+import { Card, Rate, Button, Space, Tag, message, List, Popconfirm } from 'antd';
+import { DeleteOutlined } from '@ant-design/icons';
 import { feedbackService } from '../services/feedbackService';
-
-const { confirm } = Modal;
 
 const FeedbackManagement = () => {
   const [feedbacks, setFeedbacks] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [deletingId, setDeletingId] = useState(null); // 跟踪正在删除的ID
 
   // 加载评价数据
   const loadFeedbacks = async () => {
@@ -28,43 +27,43 @@ const FeedbackManagement = () => {
     loadFeedbacks();
   }, []);
 
-  // 删除评价
-  const handleDeleteFeedback = (feedbackId) => {
-    confirm({
-      title: '确认删除',
-      icon: <ExclamationCircleOutlined />,
-      content: '确定要删除这条评价吗？此操作不可恢复。',
-      okText: '确定删除',
-      okType: 'danger',
-      cancelText: '取消',
-      onOk: async () => {
-        try {
-          const success = await feedbackService.deleteFeedback(feedbackId);
-          if (success) {
-            message.success('评价删除成功');
-            // 重新加载数据
-            loadFeedbacks();
-          } else {
-            message.error('删除失败，评价不存在');
-          }
-        } catch (error) {
-          console.error('删除评价失败:', error);
-          message.error('删除评价失败');
-        }
-      },
-    });
+  // 删除评价 - 修复后的版本
+  const handleDeleteFeedback = async (feedbackId) => {
+    setDeletingId(feedbackId); // 设置正在删除的ID
+    
+    try {
+      console.log('开始删除评价:', feedbackId);
+      
+      const success = await feedbackService.deleteFeedback(feedbackId);
+      
+      if (success) {
+        message.success('评价删除成功');
+        
+        // 从本地状态中移除已删除的评价
+        setFeedbacks(prevFeedbacks => 
+          prevFeedbacks.filter(feedback => feedback.id !== feedbackId)
+        );
+      } else {
+        message.error('删除失败，请重试');
+      }
+    } catch (error) {
+      console.error('删除评价失败:', error);
+      message.error('删除评价失败: ' + error.message);
+    } finally {
+      setDeletingId(null); // 重置删除状态
+    }
+  };
+
+  // 检查是否有不当内容
+  const hasInappropriateContent = (comment) => {
+    if (!comment) return false;
+    const inappropriateWords = ['badword']; // 您可以在这里添加敏感词
+    return inappropriateWords.some(word => comment.toLowerCase().includes(word.toLowerCase()));
   };
 
   // 渲染每条评价卡片
   const renderFeedbackCard = (feedback) => {
     const repairman = feedbackService.getRepairmanInfo(feedback.repairmanId);
-
-    const hasInappropriateContent = () => {
-        const inappropriateWords = ['...'];
-        return inappropriateWords.some(word => 
-            feedback.comment && feedback.comment.includes(word)
-        );
-    };
     
     // 根据评分设置标签颜色
     const getRatingTagColor = (rating) => {
@@ -73,12 +72,15 @@ const FeedbackManagement = () => {
       return 'red';
     };
 
+    const inappropriate = hasInappropriateContent(feedback.comment);
+    const isDeleting = deletingId === feedback.id;
+
     return (
       <Card
         key={feedback.id}
         style={{ 
           marginBottom: 16,
-          border: hasInappropriateContent() ? '1px solid #ff4d4f' : '1px solid #d9d9d9'
+          border: inappropriate ? '1px solid #ff4d4f' : '1px solid #d9d9d9'
         }}
         size="small"
       >
@@ -117,16 +119,16 @@ const FeedbackManagement = () => {
                 padding: '8px 12px', 
                 backgroundColor: '#f5f5f5', 
                 borderRadius: 4,
-                border: hasInappropriateContent() ? '1px solid #ffccc7' : 'none'
+                border: inappropriate ? '1px solid #ffccc7' : 'none'
               }}>
                 <div style={{ fontWeight: 'bold', marginBottom: 4 }}>评论内容:</div>
                 <div style={{ 
-                  color: hasInappropriateContent() ? '#ff4d4f' : 'inherit',
-                  fontStyle: hasInappropriateContent() ? 'italic' : 'normal'
+                  color: inappropriate ? '#ff4d4f' : 'inherit',
+                  fontStyle: inappropriate ? 'italic' : 'normal'
                 }}>
                   {feedback.comment}
                 </div>
-                {hasInappropriateContent() && (
+                {inappropriate && (
                   <Tag color="red" style={{ marginTop: 4 }}>可能包含不当内容</Tag>
                 )}
               </div>
@@ -147,14 +149,17 @@ const FeedbackManagement = () => {
               okText="确定"
               cancelText="取消"
               okType="danger"
+              disabled={isDeleting}
             >
               <Button 
                 type="primary" 
                 danger 
                 icon={<DeleteOutlined />}
                 size="small"
+                loading={isDeleting}
+                disabled={isDeleting}
               >
-                删除
+                {isDeleting ? '删除中...' : '删除'}
               </Button>
             </Popconfirm>
           </div>

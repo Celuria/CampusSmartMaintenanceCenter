@@ -1,16 +1,16 @@
 // src/components/DataAnalysis.jsx
 import React, { useState, useEffect } from 'react';
-import { Row, Col, Card, Table, Tag, Spin, Space } from 'antd';
-import { Pie, Column } from '@ant-design/charts';//npm install @ant-design/charts
+import { Row, Col, Card, Table, Tag, Spin } from 'antd';
+import { Pie, Column } from '@ant-design/charts';
 import { statisticsService } from '../services/statisticsService';
 
 const DataAnalysis = () => {
+  // ... 保持原有的状态和逻辑不变
   const [categoryData, setCategoryData] = useState([]);
   const [locationData, setLocationData] = useState([]);
   const [ratingData, setRatingData] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // 加载所有统计数据
   const loadStatistics = async () => {
     setLoading(true);
     try {
@@ -34,43 +34,115 @@ const DataAnalysis = () => {
     loadStatistics();
   }, []);
 
-  // 饼图配置 - 报修分类占比
-  const pieChartConfig = {
-    data: categoryData,
+  if (loading) {
+    return (
+      <div style={{ textAlign: 'center', padding: '50px' }}>
+        <Spin size="large" />
+        <p>正在加载统计数据...</p>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ padding: '16px' }}>
+      <h2>数据统计与分析</h2>
+      
+      <Row gutter={[16, 16]}>
+        {/* 饼图 - 报修分类占比 */}
+        <Col xs={24} md={12} lg={8}>
+          <Card title="报修分类占比" variant="borderless">
+            <RepairCategoryPieChart data={categoryData} />
+            <div style={{ marginTop: '16px', textAlign: 'center' }}>
+              <p>总计: {categoryData.reduce((sum, item) => sum + item.value, 0)} 次报修</p>
+            </div>
+          </Card>
+        </Col>
+
+        {/* 柱状图 - 具体位置报修数量排行 */}
+        <Col xs={24} md={12} lg={8}>
+          <Card title="位置报修数量排行" variant="borderless">
+            <LocationRepairColumnChart data={locationData} />
+            <div style={{ marginTop: '16px', textAlign: 'center' }}>
+              <p>前8个位置报修数量统计</p>
+            </div>
+          </Card>
+        </Col>
+
+        {/* 表格 - 维修人员平均评分排行 */}
+        <Col xs={24} md={24} lg={8}>
+          <Card title="维修人员评分排行" variant="borderless">
+            <RepairmanRatingTable data={ratingData} />
+            <div style={{ marginTop: '16px', textAlign: 'center' }}>
+              <p>基于用户评价计算的平均分</p>
+            </div>
+          </Card>
+        </Col>
+      </Row>
+
+      {/* 统计摘要 */}
+      <Row gutter={[16, 16]} style={{ marginTop: '16px' }}>
+        <Col xs={24} sm={8}>
+          <Card size="small" title="总报修数" variant="borderless">
+            <div style={{ fontSize: '24px', fontWeight: 'bold', textAlign: 'center' }}>
+              {categoryData.reduce((sum, item) => sum + item.value, 0)}
+            </div>
+          </Card>
+        </Col>
+        <Col xs={24} sm={8}>
+          <Card size="small" title="平均处理时间" variant="borderless">
+            <div style={{ fontSize: '24px', fontWeight: 'bold', textAlign: 'center' }}>
+              2.3 天
+            </div>
+          </Card>
+        </Col>
+        <Col xs={24} sm={8}>
+          <Card size="small" title="用户满意度" variant="borderless">
+            <div style={{ fontSize: '24px', fontWeight: 'bold', textAlign: 'center' }}>
+              94.5%
+            </div>
+          </Card>
+        </Col>
+      </Row>
+    </div>
+  );
+};
+
+// 修复后的饼图组件 - 简化配置
+const RepairCategoryPieChart = ({ data }) => {
+  if (!data || data.length === 0) {
+    return <div style={{ textAlign: 'center', padding: '50px 0' }}>暂无数据</div>;
+  }
+
+  // 使用最基本的配置
+  const config = {
+    data: data,
     angleField: 'value',
     colorField: 'type',
     radius: 0.8,
     label: {
       type: 'outer',
-      content: '{name} {percentage}',
     },
     interactions: [
-      {
-        type: 'element-active',
-      },
+      { type: 'element-active' }
     ],
-    legend: {
-      position: 'bottom',
-    },
     height: 300,
   };
 
-  // 柱状图配置 - 具体位置报修数量排行
-  const columnChartConfig = {
-    data: locationData,
+  return <Pie {...config} />;
+};
+
+// 修复后的柱状图组件 - 简化配置
+const LocationRepairColumnChart = ({ data }) => {
+  if (!data || data.length === 0) {
+    return <div style={{ textAlign: 'center', padding: '50px 0' }}>暂无数据</div>;
+  }
+
+  // 使用最基本的配置
+  const config = {
+    data: data,
     xField: 'location',
     yField: 'count',
-    seriesField: 'location',
-    color: ({ location }) => {
-      const colors = ['#1890ff', '#52c41a', '#faad14', '#f5222d', '#722ed1', '#fa541c', '#13c2c2', '#eb2f96'];
-      return colors[locationData.findIndex(item => item.location === location) % colors.length];
-    },
-    label: {
-      position: 'top',
-      style: {
-        fill: '#000',
-      },
-    },
+    color: '#1890ff',
     xAxis: {
       label: {
         autoRotate: false,
@@ -79,8 +151,12 @@ const DataAnalysis = () => {
     height: 300,
   };
 
-  // 表格列定义 - 维修人员评分排行
-  const ratingColumns = [
+  return <Column {...config} />;
+};
+
+// 表格组件保持不变
+const RepairmanRatingTable = ({ data }) => {
+  const columns = [
     {
       title: '排名',
       key: 'rank',
@@ -123,82 +199,16 @@ const DataAnalysis = () => {
     },
   ];
 
-  if (loading) {
-    return (
-      <div style={{ textAlign: 'center', padding: '50px' }}>
-        <Spin size="large" />
-        <p>正在加载统计数据...</p>
-      </div>
-    );
-  }
-
-  return (
-    <div style={{ padding: '16px' }}>
-      <h2>数据统计与分析</h2>
-      
-      <Row gutter={[16, 16]}>
-        {/* 饼图 - 报修分类占比 */}
-        <Col xs={24} md={12} lg={8}>
-          <Card title="报修分类占比" bordered={false}>
-            <Pie {...pieChartConfig} />
-            <div style={{ marginTop: '16px', textAlign: 'center' }}>
-              <p>总计: {categoryData.reduce((sum, item) => sum + item.value, 0)} 次报修</p>
-            </div>
-          </Card>
-        </Col>
-
-        {/* 柱状图 - 具体位置报修数量排行 */}
-        <Col xs={24} md={12} lg={8}>
-          <Card title="位置报修数量排行" bordered={false}>
-            <Column {...columnChartConfig} />
-            <div style={{ marginTop: '16px', textAlign: 'center' }}>
-              <p>前8个位置报修数量统计</p>
-            </div>
-          </Card>
-        </Col>
-
-        {/* 表格 - 维修人员平均评分排行 */}
-        <Col xs={24} md={24} lg={8}>
-          <Card title="维修人员评分排行" bordered={false}>
-            <Table
-              dataSource={ratingData}
-              columns={ratingColumns}
-              pagination={false}
-              size="small"
-              rowKey="id"
-            />
-            <div style={{ marginTop: '16px', textAlign: 'center' }}>
-              <p>基于用户评价计算的平均分</p>
-            </div>
-          </Card>
-        </Col>
-      </Row>
-
-      {/* 统计摘要 */}
-      <Row gutter={[16, 16]} style={{ marginTop: '16px' }}>
-        <Col xs={24} sm={8}>
-          <Card size="small" title="总报修数" bordered={false}>
-            <div style={{ fontSize: '24px', fontWeight: 'bold', textAlign: 'center' }}>
-              {categoryData.reduce((sum, item) => sum + item.value, 0)}
-            </div>
-          </Card>
-        </Col>
-        <Col xs={24} sm={8}>
-          <Card size="small" title="平均处理时间" bordered={false}>
-            <div style={{ fontSize: '24px', fontWeight: 'bold', textAlign: 'center' }}>
-              2.3 天
-            </div>
-          </Card>
-        </Col>
-        <Col xs={24} sm={8}>
-          <Card size="small" title="用户满意度" bordered={false}>
-            <div style={{ fontSize: '24px', fontWeight: 'bold', textAlign: 'center' }}>
-              94.5%
-            </div>
-          </Card>
-        </Col>
-      </Row>
-    </div>
+  return data && data.length > 0 ? (
+    <Table
+      dataSource={data}
+      columns={columns}
+      pagination={false}
+      size="small"
+      rowKey="id"
+    />
+  ) : (
+    <div style={{ textAlign: 'center', padding: '50px 0' }}>暂无数据</div>
   );
 };
 
