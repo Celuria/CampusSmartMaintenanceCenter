@@ -146,6 +146,16 @@ const RepairOrderList = ({ repairOrders: initialRepairOrders, loading: initialLo
       ellipsis: true,
     },
     {
+      title: '紧急程度',
+      dataIndex: 'urgency',
+      key: 'urgency',
+      width: 100,
+      render: (urgency) => {
+        const urgencyInfo = repairUtils.getUrgencyInfo(urgency);
+        return <Tag color={urgencyInfo.color}>{urgencyInfo.label}</Tag>;
+      },
+    },
+    {
       title: '状态',
       dataIndex: 'status',
       key: 'status',

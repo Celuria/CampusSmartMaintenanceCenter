@@ -32,6 +32,7 @@ export const mockRepairOrders = [
     status: REPAIR_STATUS.PROCESSING.value,
     repairmanId: 1,
     studentID: '001',
+    urgency: 'urgent', // 添加紧急程度
     created_at: '2025-11-10 10:30:00',
     rejection_reason: null,
     assigned_at: '2025-11-11 9:30:00',
@@ -46,6 +47,7 @@ export const mockRepairOrders = [
     status: REPAIR_STATUS.PENDING.value,
     repairmanId: 2,
     studentID: '002',
+    urgency: 'normal', // 添加紧急程度
     created_at: '2025-11-11 10:30:00',
     rejection_reason: null,
     assigned_at: null,
@@ -60,6 +62,7 @@ export const mockRepairOrders = [
     status: REPAIR_STATUS.COMPLETED.value,
     repairmanId: 3,
     studentID: '003',
+    urgency: 'critical', // 添加紧急程度
     created_at: '2025-11-12 12:30:00',
     rejection_reason: null,
     assigned_at: '2025-11-12 14:00:00',
@@ -67,6 +70,13 @@ export const mockRepairOrders = [
     closed_at: null,
   },
 ];
+
+//11.18添加紧急程度类型
+export const URGENCY_LEVELS = {
+  NORMAL: { value: 'normal', label: '一般', color: 'blue' },
+  URGENT: { value: 'urgent', label: '较紧急', color: 'orange' },
+  CRITICAL: { value: 'critical', label: '紧急', color: 'red' },
+};
 
 // 数据服务方法
 export const repairService = {
@@ -115,6 +125,7 @@ export const repairService = {
     const newOrder = {
       id: newId,
       ...orderData,
+      urgency: orderData.urgency || 'normal',
       created_at: new Date().toISOString().replace('T', ' ').substring(0, 19),
       status: REPAIR_STATUS.PENDING.value,
       rejection_reason: null,
@@ -122,7 +133,7 @@ export const repairService = {
       completed_at: null,
       closed_at: null,
     };
-    mockRepairOrders.push(newOrder);
+    mockRepairOrders.unshift(newOrder);
     return newOrder;
   },
 
@@ -258,6 +269,16 @@ export const repairUtils = {
       3: { id: 3, name: '王师傅' },
     };
     return repairmen[repairmanId] || null;
+  },
+
+  // 11.18获取紧急程度信息
+  getUrgencyInfo: (urgency) => {
+    const urgencyMap = {
+      normal: { label: '一般', color: 'blue' },
+      urgent: { label: '较紧急', color: 'orange' },
+      critical: { label: '紧急', color: 'red' },
+    };
+    return urgencyMap[urgency] || { label: urgency, color: 'default' };
   },
 };
 

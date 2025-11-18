@@ -116,15 +116,35 @@ const Home = () => {
   }
 
   // 处理表单提交
-  const handleFormSubmit = (values) => {
-    console.log('表单提交:', values);
-    console.log('上传的文件:', fileList);
+  // 在学生端的 Home.jsx 中修改 handleFormSubmit 函数
+// 处理表单提交
+const handleFormSubmit = async (values) => {
+  try {
+    // 添加当前用户ID
+    const formData = {
+      ...values,
+      studentID: 'stu', // 这里应该是当前登录用户的ID
+    };
     
-    // 这里可以添加提交到后端的逻辑，包括文件上传
+    // 调用服务创建报修
+    const newOrder = await repairService.createRepairOrder(formData);
+    console.log('创建报修成功:', newOrder);
+    
     message.success('报修申请提交成功！');
+    
+    // 重置表单
     form.resetFields();
-    setFileList([]); // 清空文件列表
-  };
+    setFileList([]);
+    
+    // 如果当前在"我的报修"页面，刷新数据
+    if (currentMenu === 'my-repairs') {
+      fetchMyRepairs();
+    }
+  } catch (error) {
+    console.error('提交报修申请失败:', error);
+    message.error('提交报修申请失败，请重试！');
+  }
+};
 
   // 完善：头像下拉菜单项
   const avatarMenuItems = [
@@ -331,24 +351,35 @@ const Home = () => {
                     />
                   </Form.Item>
 
+                  {/* 11.18新增紧急程度选择 */}
+                  <Form.Item
+                    label="紧急程度"
+                    name="urgency"
+                    rules={[{ required: true, message: '请选择紧急程度!' }]}
+                    initialValue="normal"
+                  >
+                    <Select placeholder="请选择紧急程度" size="large">
+                      <Option value="normal">一般</Option>
+                      <Option value="urgent">较紧急</Option>
+                      <Option value="critical">紧急</Option>
+                    </Select>
+                  </Form.Item>
+
                   {/* 11.18新增图片上传功能 */}
                   <Form.Item
                     label="上传相关图片"
                     extra="支持上传多张图片，每张图片大小不超过5MB"
                   >
-                    <Upload.Dragger
+                    <Upload
                       {...uploadProps}
                       listType="picture"
-                      style={{ padding: '16px' }}
+                      showUploadList={{
+                        showPreviewIcon: true,
+                        showRemoveIcon: true,
+                      }}
                     >
-                      <p className="ant-upload-drag-icon">
-                        <UploadOutlined />
-                      </p>
-                      <p className="ant-upload-text">点击或拖拽图片到此区域上传</p>
-                      <p className="ant-upload-hint">
-                        支持上传多张图片，可用于更清晰地描述问题
-                      </p>
-                    </Upload.Dragger>
+                      <Button icon={<UploadOutlined />}>选择图片</Button>
+                    </Upload>
                   </Form.Item>
 
                   <Form.Item

@@ -35,6 +35,16 @@ const MyRepairs = ({ repairOrders, loading }) => {
       ellipsis: true,
     },
     {
+      title: '紧急程度',
+      dataIndex: 'urgency',
+      key: 'urgency',
+      width: 100,
+      render: (urgency) => {
+        const urgencyInfo = repairUtils.getUrgencyInfo(urgency);
+        return <Tag color={urgencyInfo.color}>{urgencyInfo.label}</Tag>;
+      },
+    },
+    {
       title: '提交时间',
       dataIndex: 'created_at',
       key: 'created_at',
