@@ -136,10 +136,13 @@ const handleFormSubmit = async (values) => {
     form.resetFields();
     setFileList([]);
     
-    // 如果当前在"我的报修"页面，刷新数据
-    if (currentMenu === 'my-repairs') {
+    //刷新数据
+    setCurrentMenu('my-repairs');
+
+    setTimeout(() => {
       fetchMyRepairs();
-    }
+    }, 100);
+
   } catch (error) {
     console.error('提交报修申请失败:', error);
     message.error('提交报修申请失败，请重试！');
