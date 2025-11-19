@@ -321,16 +321,26 @@ const handleFormSubmit = async (values) => {
                   autoComplete="off"
                 >
                   <Form.Item
+                    label="报修标题"
+                    name="title"
+                    rules={[{ required: true, message: "请输入报修标题!" }]}
+                  >
+                    <Input placeholder="请输入报修标题" size="large" />
+                  </Form.Item>
+                  <Form.Item
                     label="报修分类"
                     name="category"
                     rules={[{ required: true, message: "请选择报修分类!" }]}
                   >
                     <Select placeholder="请选择报修分类" size="large">
-                      <Option value="dormitory">宿舍</Option>
-                      <Option value="classroom">教室</Option>
-                      <Option value="public_area">公共区域</Option>
+                      <Option value="dormitory">水电维修</Option>
+                      <Option value="classroom">网络故障</Option>
+                      <Option value="public_area">家具维修</Option>
+                      <Option value="public_area">电器故障</Option>
+                      <Option value="public_area">公共设施</Option>
                     </Select>
                   </Form.Item>
+                      
 
                   <Form.Item
                     label="具体位置"
@@ -362,9 +372,9 @@ const handleFormSubmit = async (values) => {
                     initialValue="normal"
                   >
                     <Select placeholder="请选择紧急程度" size="large">
-                      <Option value="normal">一般</Option>
-                      <Option value="urgent">较紧急</Option>
-                      <Option value="critical">紧急</Option>
+                      <Option value="normal">低</Option>
+                      <Option value="urgent">中</Option>
+                      <Option value="critical">高</Option>
                     </Select>
                   </Form.Item>
 

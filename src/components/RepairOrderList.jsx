@@ -243,7 +243,10 @@ const RepairOrderList = ({ repairOrders: initialRepairOrders, loading: initialLo
               <Option value="pending">待受理</Option>
               <Option value="processing">处理中</Option>
               <Option value="completed">已完成</Option>
+              <Option value="canceled">待评价</Option>
+              <Option value="closed">已关闭</Option>
               <Option value="rejected">已驳回</Option>
+              
             </Select>
           </Col>
           <Col span={6}>
