@@ -1,4 +1,6 @@
 // src/components/FeedbackManagement.jsx
+//管理员端：评价管理
+
 import React, { useState, useEffect } from 'react';
 import { Card, Rate, Button, Space, Tag, message, List, Popconfirm } from 'antd';
 import { DeleteOutlined } from '@ant-design/icons';

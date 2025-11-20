@@ -5,9 +5,11 @@ export const statisticsService = {
   // 获取报修分类占比数据
   getRepairCategoryStats: async () => {
     return [
-      { type: '宿舍', value: 65 },
-      { type: '教室', value: 20 },
-      { type: '公共区域', value: 15 },
+      { type: '水电维修', value: 35 },
+      { type: '网络故障', value: 20 },
+      { type: '家具维修', value: 15 },
+      { type: '电气故障', value: 20 },
+      { type: '公共设施', value: 10 },
     ];
   },
 

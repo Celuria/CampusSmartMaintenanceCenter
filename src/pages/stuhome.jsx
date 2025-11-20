@@ -51,7 +51,7 @@ const Home = () => {
     {
       key: "create-repair",
       icon: <PlusOutlined />,
-      label: "创建报修申请",
+      label: "申请报修",
     },
   ];
 

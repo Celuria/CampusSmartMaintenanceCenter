@@ -1,31 +1,38 @@
 // src/components/UserManagement.jsx
 import React, { useState} from 'react';
-import { Card, Table, Space, Select, Row, Col, Statistic, Tag } from 'antd';
-import { UserOutlined, ToolOutlined, TeamOutlined, PhoneOutlined } from '@ant-design/icons';
+import { Card, Table, Space, Select, Row, Col, Statistic, Tag,
+  Button, Modal, Form, Input, message, Popconfirm
+} from 'antd';
+import { UserOutlined, ToolOutlined, TeamOutlined, PhoneOutlined,
+  EditOutlined, DeleteOutlined, KeyOutlined
+ } from '@ant-design/icons';
 
 const { Option } = Select;
 
 const UserManagement = () => {
   const [currentUserType, setCurrentUserType] = useState('students');
   const [loading, setLoading] = useState(false);
+  const [editModalVisible, setEditModalVisible] = useState(false);
+  const [editingUser, setEditingUser] = useState(null);
+  const [form] = Form.useForm();
 
   // 模拟学生账号数据
-  const studentAccounts = [
-    { id: '20210001', stunumber:"001", username: 'zhangsan', nickname: '张三', phone: '13800138001' },
-    { id: '20210002', stunumber:"002", username: 'lisi', nickname: '李四', phone: '13800138002' },
-    { id: '20210003', stunumber:"003", username: 'wangwu', nickname: '王五', phone: '13800138003' },
-    { id: '20210004', stunumber:"004", username: 'zhaoliu', nickname: '赵六', phone: '13800138004' },
-    { id: '20210005', stunumber:"005", username: 'qianqi', nickname: '钱七', phone: '13800138005' },
-    { id: '20210006', stunumber:"006", username: 'sunba', nickname: '孙八', phone: '13800138006' }
-  ];
+  const [studentAccounts, setStudentAccounts] = useState([
+    { id: '20210001', number:"stu001", name: '张三', phone: '13800138001', type: 'student' },
+    { id: '20210002', number:"stu002", name: '李四', phone: '13800138002', type: 'student' },
+    { id: '20210003', number:"stu003", name: '王五', phone: '13800138003', type: 'student' },
+    { id: '20210004', number:"stu004", name: '赵六', phone: '13800138004', type: 'student' },
+    { id: '20210005', number:"stu005", name: '钱七', phone: '13800138005', type: 'student' },
+    { id: '20210006', number:"stu006", name: '孙八', phone: '13800138006', type: 'student' },
+  ]);
 
   // 模拟维修人员账号数据
-  const repairmanAccounts = [
-    { id: 'worker001', workernumber:"001", username: 'zhangshifu', nickname: '张师傅', phone: '13900139001' },
-    { id: 'worker002', workernumber:"002", username: 'lishifu', nickname: '李师傅', phone: '13900139002' },
-    { id: 'worker003', workernumber:"003", username: 'wangshifu', nickname: '王师傅', phone: '13900139003' },
-    { id: 'worker004', workernumber:"004", username: 'zhaoshifu', nickname: '赵师傅', phone: '13900139004' }
-  ];
+  const [repairmanAccounts, setRepairmanAccounts] = useState([
+    { id: '20210007', number:"worker001", name: '张师傅', phone: '13900139001', type: 'repairman' },
+    { id: '20210008', number:"worker002", name: '李师傅', phone: '13900139002', type: 'repairman' },
+    { id: '20210009', number:"worker003", name: '王师傅', phone: '13900139003', type: 'repairman' },
+    { id: '20210010', number:"worker004", name: '赵师傅', phone: '13900139004', type: 'repairman' },
+  ]);
 
   // 处理下拉菜单选择
   const handleUserTypeChange = (value) => {
@@ -40,6 +47,64 @@ const UserManagement = () => {
   // 获取当前标题
   const getCurrentTitle = () => {
     return currentUserType === 'students' ? '学生账号' : '维修人员账号';
+  };
+
+  // 11.20删除用户
+  const handleDelete = (record) => {
+    if (currentUserType === 'students') {
+      setStudentAccounts(prev => prev.filter(user => user.id !== record.id));
+    } else {
+      setRepairmanAccounts(prev => prev.filter(user => user.id !== record.id));
+    }
+    message.success('用户删除成功');
+  };
+
+  // 11.20重置密码
+  const handleResetPassword = (record) => {
+    message.success(`已重置用户 ${record.nickname} 的密码为默认密码`);
+  };
+
+  // 11.20修改数据：打开编辑模态框
+  const handleEdit = (record) => {
+    setEditingUser(record);
+    form.setFieldsValue({
+      phone: record.phone,
+      type: record.type
+    });
+    setEditModalVisible(true);
+  };
+
+  // 保存编辑
+  const handleSaveEdit = async () => {
+    try {
+      const values = await form.validateFields();
+      const updatedUser = { ...editingUser, ...values };
+      
+      if (currentUserType === 'students') {
+        setStudentAccounts(prev => 
+          prev.map(user => user.id === updatedUser.id ? updatedUser : user)
+        );
+      } else {
+        setRepairmanAccounts(prev => 
+          prev.map(user => user.id === updatedUser.id ? updatedUser : user)
+        );
+      }
+      
+      message.success('用户信息更新成功');
+      setEditModalVisible(false);
+      setEditingUser(null);
+      form.resetFields();
+    } catch (error) {
+      console.error('表单验证失败:', error);
+      message.error('保存失败，请检查表单数据');
+    }
+  };
+
+  // 取消编辑
+  const handleCancelEdit = () => {
+    setEditModalVisible(false);
+    setEditingUser(null);
+    form.resetFields();
   };
 
   // 表格列定义
@@ -60,20 +125,14 @@ const UserManagement = () => {
     },
     {
       title: '学号/工号',
-      dataIndex: currentUserType === 'students' ? 'stunumber' : 'workernumber',
+      dataIndex: 'number',
       key: 'number',
       width: 150,
     },
     {
-      title: '用户名',
-      dataIndex: 'username',
-      key: 'username',
-      width: 150,
-    },
-    {
-      title: '昵称',
-      dataIndex: 'nickname',
-      key: 'nickname',
+      title: '姓名',
+      dataIndex: 'name',
+      key: 'name',
       width: 120,
     },
     {
@@ -96,6 +155,56 @@ const UserManagement = () => {
         <Tag color={currentUserType === 'students' ? 'blue' : 'green'}>
           {currentUserType === 'students' ? '学生' : '维修人员'}
         </Tag>
+      ),
+    },
+    {
+      title: '操作',
+      key: 'action',
+      width: 200,
+      render: (_, record) => (
+        <Space size="small">
+          <Popconfirm
+            title="确定要删除这个用户吗？"
+            description="此操作不可恢复，请谨慎操作！"
+            onConfirm={() => handleDelete(record)}
+            okText="确定"
+            cancelText="取消"
+          >
+            <Button 
+              type="link" 
+              danger 
+              icon={<DeleteOutlined />}
+              size="small"
+            >
+              删除
+            </Button>
+          </Popconfirm>
+          
+          <Popconfirm
+            title="重置密码"
+            description="确定要将密码重置为默认密码吗？"
+            onConfirm={() => handleResetPassword(record)}
+            okText="确定"
+            cancelText="取消"
+          >
+            <Button 
+              type="link" 
+              icon={<KeyOutlined />}
+              size="small"
+            >
+              重置密码
+            </Button>
+          </Popconfirm>
+
+          <Button 
+            type="link" 
+            icon={<EditOutlined />}
+            onClick={() => handleEdit(record)}
+            size="small"
+          >
+            修改
+          </Button>
+        </Space>
       ),
     },
   ];
@@ -178,6 +287,57 @@ const UserManagement = () => {
           size="middle"
         />
       </Card>
+
+      {/* 11.20编辑用户模态框 */}
+      <Modal
+        title="编辑用户信息"
+        open={editModalVisible}
+        onOk={handleSaveEdit}
+        onCancel={handleCancelEdit}
+        okText="保存"
+        cancelText="取消"
+      >
+        <Form
+          form={form}
+          layout="vertical"
+          autoComplete="off"
+        >
+          <Form.Item
+            label="用户ID"
+          >
+            <Input value={editingUser?.id} disabled />
+          </Form.Item>
+
+          <Form.Item
+            label="姓名"
+          >
+            <Input value={editingUser?.name} disabled />
+          </Form.Item>
+          
+          <Form.Item
+            label="学号/工号"
+          >
+            <Input value={editingUser?.number} disabled />
+          </Form.Item>
+          
+          <Form.Item
+            label="联系电话"
+            name="phone"
+            rules={[
+              { required: true, message: '请输入联系电话!' },
+              //{ pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号码!' }
+            ]}
+          >
+            <Input placeholder="请输入联系电话" />
+          </Form.Item>
+
+          <Form.Item
+            label="用户类型"
+          >
+            <Input value={editingUser?.type} disabled />
+          </Form.Item>
+        </Form>
+      </Modal>
     </div>
   );
 };

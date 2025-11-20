@@ -1,4 +1,6 @@
 // src/components/DataAnalysis.jsx
+//管理员端：数据统计与分析
+
 import React, { useState, useEffect } from 'react';
 import { Row, Col, Card, Table, Tag, Spin } from 'antd';
 import { Pie, Column } from '@ant-design/charts';
