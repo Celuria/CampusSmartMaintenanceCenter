@@ -38,7 +38,7 @@ export const mockRepairOrders = [
   {
     id: 1,
     title: "卫生间漏水",
-    category: REPAIR_CATEGORIES.waterAndElectricity.value,
+    category: 'waterAndElectricity',
     location: "3栋502寝室",
     description: "卫生间水管接口处持续漏水，已经持续两天，地面有积水。",
     status: REPAIR_STATUS.PROCESSING.value,
@@ -58,13 +58,13 @@ export const mockRepairOrders = [
   {
     id: 2,
     title: "教室灯管故障",
-    category: REPAIR_CATEGORIES.networkIssues.value,
+    category: 'networkIssues',
     location: "教学楼A201",
     description: "教室前排左侧灯管闪烁不亮，影响上课视线。",
     status: REPAIR_STATUS.PENDING.value,
     repairmanId: 2,
-    studentID: "002",
-    studentName: "李四",
+    studentID: "001",
+    studentName: "张三",
     contactPhone: "13800138001",
     urgency: "normal", // 添加紧急程度
     created_at: "2025-11-11 10:30:00",
@@ -78,13 +78,13 @@ export const mockRepairOrders = [
   {
     id: 3,
     title: "声控灯故障",
-    category: REPAIR_CATEGORIES.publicFacilities.value,
+    category: 'publicFacilities',
     location: "5栋3楼走廊",
     description: "声控灯不灵敏，需要很大声音才会亮，晚上行走不便。",
     status: REPAIR_STATUS.COMPLETED.value,
     repairmanId: 3,
-    studentID: "003",
-    studentName: "王五",
+    studentID: "001",
+    studentName: "张三",
     contactPhone: "13800138002",
     urgency: "critical", // 添加紧急程度
     created_at: "2025-11-12 12:30:00",
@@ -94,9 +94,26 @@ export const mockRepairOrders = [
     closed_at: null,
     repairNotes: "维修师傅已检查，需要更换零件，预计明天完成维修。",
   },
+  {
+    id: 4,
+    title: "=w=",
+    category: 'furnitureRepair',
+    location: "123",
+    description: "456",
+    status: REPAIR_STATUS.TO_BE_EVALUATED.value,
+    repairmanId: 3,
+    studentID: "001",
+    studentName: "张三",
+    contactPhone: "13800138002",
+    urgency: "critical", // 添加紧急程度
+    created_at: "2025-11-12 12:30:00",
+    rejection_reason: null,
+    assigned_at: "2025-11-12 14:00:00",
+    completed_at: "2025-11-13 15:30:00",
+    closed_at: null,
+    repairNotes: "789",
+  },
 ];
-
-
 
 // 数据服务方法
 export const repairService = {
