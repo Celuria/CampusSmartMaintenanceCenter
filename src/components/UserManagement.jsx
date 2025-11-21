@@ -1,4 +1,6 @@
 // src/components/UserManagement.jsx
+//管理员端：用户管理
+
 import React, { useState} from 'react';
 import { Card, Table, Space, Select, Row, Col, Statistic, Tag,
   Button, Modal, Form, Input, message, Popconfirm
@@ -49,7 +51,7 @@ const UserManagement = () => {
     return currentUserType === 'students' ? '学生账号' : '维修人员账号';
   };
 
-  // 11.20删除用户
+  // 删除用户
   const handleDelete = (record) => {
     if (currentUserType === 'students') {
       setStudentAccounts(prev => prev.filter(user => user.id !== record.id));
@@ -59,7 +61,7 @@ const UserManagement = () => {
     message.success('用户删除成功');
   };
 
-  // 11.20重置密码
+  // 修复重置密码函数
   const handleResetPassword = (record) => {
     try {
       // 获取当前日期，格式为 YYYYMMDD
@@ -73,7 +75,7 @@ const UserManagement = () => {
       const newPassword = `${dateStr}`;
 
       // 使用 Modal 弹窗显示重置密码信息
-      Modal.info({
+      Modal.success({
         title: '密码重置成功',
         content: (
           <div>
@@ -93,7 +95,7 @@ const UserManagement = () => {
     }
   };
 
-  // 11.20修改数据：打开编辑模态框
+  // 修改数据：打开编辑模态框
   const handleEdit = (record) => {
     setEditingUser(record);
     form.setFieldsValue({
@@ -198,6 +200,7 @@ const UserManagement = () => {
             onConfirm={() => handleDelete(record)}
             okText="确定"
             cancelText="取消"
+            okType="danger"
           >
             <Button 
               type="link" 
@@ -281,18 +284,18 @@ const UserManagement = () => {
         title={getCurrentTitle()}
         extra={
           <Select
-            defaultValue="students"
+            value={currentUserType}  // 修复：使用 value 而不是 defaultValue
             style={{ width: 200 }}
             onChange={handleUserTypeChange}
             size="large"
           >
-            <Option value="students">
+            <Option value="students">  {/* 修复：保持值一致 */}
               <Space>
                 <UserOutlined />
                 学生账号
               </Space>
             </Option>
-            <Option value="repairmen">
+            <Option value="repairman">  {/* 修复：改为 repairman 与状态一致 */}
               <Space>
                 <ToolOutlined />
                 维修人员账号
@@ -317,7 +320,7 @@ const UserManagement = () => {
         />
       </Card>
 
-      {/* 11.20编辑用户模态框 */}
+      {/* 编辑用户模态框 */}
       <Modal
         title="编辑用户信息"
         open={editModalVisible}
