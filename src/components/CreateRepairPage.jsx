@@ -36,10 +36,22 @@ const CreateRepairPage = ({ currentUser, onSubmitSuccess }) => {
   const handleFormSubmit = async (values) => {
     setSubmitting(true);
     try {
+      // 生成图片URL数组（在实际项目中，这里应该上传到服务器并返回URL）
+      const imageUrls = fileList.map(file => {
+        // 如果是已经上传的图片，直接使用url
+        if (file.url) return file.url;
+        // 如果是新选择的图片，创建本地预览URL
+        if (file.originFileObj) {
+          return URL.createObjectURL(file.originFileObj);
+        }
+        return '';
+      }).filter(url => url !== '');
+
       // 使用正确的学生ID格式
       const formData = {
         ...values,
         studentID: currentUser.studentID,
+        images: imageUrls, // 保存图片URL数组
       };
       
       console.log('提交的报修数据:', formData);

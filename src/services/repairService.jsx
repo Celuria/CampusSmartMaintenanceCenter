@@ -169,6 +169,7 @@ export const repairService = {
       assigned_at: null,
       completed_at: null,
       closed_at: null,
+      images: orderData.images || [], // 保存图片数据
     };
     mockRepairOrders.unshift(newOrder);
     return newOrder;

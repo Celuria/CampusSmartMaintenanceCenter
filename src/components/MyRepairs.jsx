@@ -113,9 +113,10 @@ const MyRepairs = ({ repairOrders: initialRepairOrders, loading, currentUser, on
     try {
       const orderDetail = await repairService.getRepairOrderById(record.id);
       
+      // 使用工单中保存的图片数据，如果没有则使用空数组
       const orderWithImages = {
         ...orderDetail,
-        // 移除无效的图片URL
+        images: orderDetail.images || [], // 使用工单中的图片数据
       };
       
       setSelectedOrder(orderWithImages);
@@ -601,6 +602,45 @@ const MyRepairs = ({ repairOrders: initialRepairOrders, loading, currentUser, on
                 </Descriptions.Item>
               )}
             </Descriptions>
+
+            {/* 新增：现场照片展示 */}
+            {selectedOrder.images && selectedOrder.images.length > 0 && (
+              <div style={{ marginBottom: 24 }}>
+                <h4 style={{ marginBottom: 16 }}>现场照片</h4>
+                <Image.PreviewGroup>
+                  <Space wrap>
+                    {selectedOrder.images.map((image, index) => (
+                      <Image
+                        key={index}
+                        width={120}
+                        height={90}
+                        src={image}
+                        style={{
+                          borderRadius: 6,
+                          objectFit: 'cover',
+                          border: '1px solid #d9d9d9'
+                        }}
+                        placeholder={
+                          <div 
+                            style={{ 
+                              width: 120, 
+                              height: 90, 
+                              background: '#f5f5f5',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              borderRadius: 6
+                            }}
+                          >
+                            加载中...
+                          </div>
+                        }
+                      />
+                    ))}
+                  </Space>
+                </Image.PreviewGroup>
+              </div>
+            )}
 
             {/* 评价信息（如果已完成且有评价） */}
             {selectedOrder.rating && (

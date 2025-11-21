@@ -61,7 +61,36 @@ const UserManagement = () => {
 
   // 11.20重置密码
   const handleResetPassword = (record) => {
-    message.success(`已重置用户 ${record.nickname} 的密码为默认密码`);
+    try {
+      // 获取当前日期，格式为 YYYYMMDD
+      const today = new Date();
+      const year = today.getFullYear();
+      const month = String(today.getMonth() + 1).padStart(2, '0');
+      const day = String(today.getDate()).padStart(2, '0');
+      const dateStr = `${year}${month}${day}`;
+    
+      // 生成新密码：用户ID + 当前日期
+      const newPassword = `${dateStr}`;
+
+      // 使用 Modal 弹窗显示重置密码信息
+      Modal.info({
+        title: '密码重置成功',
+        content: (
+          <div>
+            <p>已重置用户 <strong>{record.name}</strong> 的密码</p>
+            <p>新密码：<strong>{newPassword}</strong></p>
+            <p style={{ color: '#ff4d4f', fontSize: '12px' }}>
+              提示：请告知用户及时登录并修改密码
+            </p>
+          </div>
+        ),
+        okText: '确定',
+        width: 400,
+      });
+    } catch (error) {
+      console.error('重置密码失败:', error);
+      message.error('重置密码失败');
+    }
   };
 
   // 11.20修改数据：打开编辑模态框
