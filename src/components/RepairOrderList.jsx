@@ -13,7 +13,7 @@ import { repairService, repairUtils } from '../services/repairService';
 
 const { Option } = Select;
 const { Search } = Input;
-const { confirm } = Modal;
+
 
 const RepairOrderList = ({ repairOrders: initialRepairOrders, loading: initialLoading }) => {
   const [repairOrders, setRepairOrders] = useState(initialRepairOrders || []);
@@ -149,12 +149,12 @@ const RepairOrderList = ({ repairOrders: initialRepairOrders, loading: initialLo
     },
     {
       title: '紧急程度',
-      dataIndex: 'urgency',
-      key: 'urgency',
+      dataIndex: 'priority',
+      key: 'priority',
       width: 100,
-      render: (urgency) => {
-        const urgencyInfo = repairUtils.getUrgencyInfo(urgency);
-        return <Tag color={urgencyInfo.color}>{urgencyInfo.label}</Tag>;
+      render: (priority) => {
+        const priorityInfo = repairUtils.getpriorityInfo(priority);
+        return <Tag color={priorityInfo.color}>{priorityInfo.label}</Tag>;
       },
     },
     {

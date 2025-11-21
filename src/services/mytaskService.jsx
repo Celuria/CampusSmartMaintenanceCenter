@@ -10,11 +10,12 @@ export const TASK_STATUS = {
 
 // 报修分类枚举
 export const REPAIR_CATEGORIES = {
-  DORMITORY: { value: 'dormitory', label: '宿舍' },
-  CLASSROOM: { value: 'classroom', label: '教室' },
-  PUBLIC_AREA: { value: 'public_area', label: '公共区域' },
+  waterAndElectricity: { value: "水电维修", label: "水电维修" },
+  networkIssues: { value: "网络故障", label: "网络故障" },
+  furnitureRepair: { value: "家具维修", label: "家具维修" },
+  applianceIssues: { value: "电器故障", label: "电器故障" },
+  publicFacilities: { value: "公共设施", label: "公共设施" },
 };
-
 // 维修人员数据
 export const REPAIRMEN = {
   1: { id: 1, name: '张师傅', phone: '13800138001', specialty: ['水管维修', '电路检修'] },
@@ -26,7 +27,7 @@ export const REPAIRMEN = {
 export const mockRepairmanTasks = [
   {
     id: 1,
-    category: REPAIR_CATEGORIES.DORMITORY.value,
+    category: REPAIR_CATEGORIES.waterAndElectricity.value,
     location: '3栋502寝室',
     description: '卫生间水管接口处持续漏水，已经持续两天，地面有积水。',
     status: TASK_STATUS.PROCESSING.value,
@@ -47,7 +48,7 @@ export const mockRepairmanTasks = [
   },
   {
     id: 2,
-    category: REPAIR_CATEGORIES.CLASSROOM.value,
+    category: REPAIR_CATEGORIES.networkIssues.value,
     location: '教学楼A201',
     description: '教室前排左侧灯管闪烁不亮，影响上课视线。',
     status: TASK_STATUS.PENDING.value,
@@ -68,7 +69,7 @@ export const mockRepairmanTasks = [
   },
   {
     id: 3,
-    category: REPAIR_CATEGORIES.PUBLIC_AREA.value,
+    category: REPAIR_CATEGORIES.publicFacilities.value,
     location: '5栋3楼走廊',
     description: '声控灯不灵敏，需要很大声音才会亮，晚上行走不便。',
     status: TASK_STATUS.COMPLETED.value,
@@ -89,7 +90,7 @@ export const mockRepairmanTasks = [
   },
   {
     id: 4,
-    category: REPAIR_CATEGORIES.DORMITORY.value,
+    category: REPAIR_CATEGORIES.waterAndElectricity.value,
     location: '7栋312寝室',
     description: '宿舍空调制冷效果差，噪音大。',
     status: TASK_STATUS.TO_BE_EVALUATED.value,
@@ -341,9 +342,11 @@ export const mytaskUtils = {
   // 获取分类信息
   getCategoryInfo: (category) => {
     const categoryMap = {
-      dormitory: { label: '宿舍' },
-      classroom: { label: '教室' },
-      public_area: { label: '公共区域' },
+      waterAndElectricity: { value: "水电维修", label: "水电维修" },
+      networkIssues: { value: "网络故障", label: "网络故障" },
+      furnitureRepair: { value: "家具维修", label: "家具维修" },
+      applianceIssues: { value: "电器故障", label: "电器故障" },
+      publicFacilities: { value: "公共设施", label: "公共设施" },
     };
     return categoryMap[category] || { label: category };
   },

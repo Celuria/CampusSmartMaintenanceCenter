@@ -188,14 +188,14 @@ const CreateRepairPage = ({ currentUser, onSubmitSuccess }) => {
 
           <Form.Item
             label="紧急程度"
-            name="urgency"
+            name="priority"
             rules={[{ required: true, message: '请选择紧急程度!' }]}
-            initialValue="normal"
+            initialValue="low"
           >
             <Select placeholder="请选择紧急程度" size="large">
-              <Option value="normal">低</Option>
-              <Option value="urgent">中</Option>
-              <Option value="critical">高</Option>
+              <Option value="low">低</Option>
+              <Option value="normal">中</Option>
+              <Option value="high">高</Option>
             </Select>
           </Form.Item>
 

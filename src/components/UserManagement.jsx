@@ -13,7 +13,7 @@ const { Option } = Select;
 
 const UserManagement = () => {
   const [currentUserType, setCurrentUserType] = useState('students');
-  const [loading, setLoading] = useState(false);
+  const [loading] = useState(false);
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [form] = Form.useForm();
@@ -73,7 +73,7 @@ const UserManagement = () => {
     
       // 生成新密码：用户ID + 当前日期
       const newPassword = `${dateStr}`;
-
+      console.log(`用户 ${record.name} 的新密码为: ${newPassword}`);
       // 使用 Modal 弹窗显示重置密码信息
       Modal.success({
         title: '密码重置成功',
@@ -182,7 +182,7 @@ const UserManagement = () => {
       title: '用户类型',
       key: 'type',
       width: 100,
-      render: (_, record) => (
+      render: () => (
         <Tag color={currentUserType === 'students' ? 'blue' : 'green'}>
           {currentUserType === 'students' ? '学生' : '维修人员'}
         </Tag>
@@ -282,7 +282,95 @@ const UserManagement = () => {
       {/* 用户类型选择和表格 */}
       <Card 
         title={getCurrentTitle()}
-        extra={
+        
+      >
+        {(() => {
+          // 保存原始数据（深拷贝），只在第一次渲染时执行
+          if (!window.__originalUserAccounts) {
+            window.__originalUserAccounts = {
+              students: JSON.parse(JSON.stringify(studentAccounts)),
+              repairmen: JSON.parse(JSON.stringify(repairmanAccounts)),
+            };
+          }
+          // 默认搜索字段
+          if (!window.__userSearchField) {
+            window.__userSearchField = 'name';
+          }
+          return null;
+        })()}
+
+        <Row gutter={12} style={{ marginBottom: 16, alignItems: 'center' }}>
+          <Col>
+            <Select
+              defaultValue={window.__userSearchField}
+              onChange={(val) => { window.__userSearchField = val; }}
+              style={{ width: 140 }}
+              size="middle"
+            >
+              <Option value="id">用户ID</Option>
+              <Option value="number">学号/工号</Option>
+              <Option value="name">姓名</Option>
+              <Option value="phone">联系电话</Option>
+            </Select>
+          </Col>
+
+          <Col flex="auto">
+            <Input.Search
+              placeholder="请输入关键词（回车或点击搜索）"
+              enterButton="搜索"
+              allowClear
+              onSearch={(value) => {
+                const kw = String(value || '').trim().toLowerCase();
+                const field = window.__userSearchField || 'name';
+                const original = window.__originalUserAccounts;
+                if (!original) return;
+
+                if (!kw) {
+                  // 关键词为空时恢复原始列表
+                  if (currentUserType === 'students') {
+                    setStudentAccounts(JSON.parse(JSON.stringify(original.students)));
+                  } else {
+                    setRepairmanAccounts(JSON.parse(JSON.stringify(original.repairmen)));
+                  }
+                  message.info('已清除筛选');
+                  return;
+                }
+
+                const source = currentUserType === 'students' ? original.students : original.repairmen;
+                const filtered = source.filter((u) =>
+                  String(u[field] ?? '').toLowerCase().includes(kw)
+                );
+
+                if (currentUserType === 'students') {
+                  setStudentAccounts(filtered);
+                } else {
+                  setRepairmanAccounts(filtered);
+                }
+                message.success(`筛选完成：共 ${filtered.length} 条结果`);
+              }}
+              size="middle"
+            />
+          </Col>
+
+          <Col>
+            <Button
+              onClick={() => {
+                const original = window.__originalUserAccounts;
+                if (!original) return;
+                if (currentUserType === 'students') {
+                  setStudentAccounts(JSON.parse(JSON.stringify(original.students)));
+                } else {
+                  setRepairmanAccounts(JSON.parse(JSON.stringify(original.repairmen)));
+                }
+                message.success('已重置为原始数据');
+              }}
+              size="middle"
+            >
+              重置
+            </Button>
+          </Col>
+
+          <Col>
           <Select
             value={currentUserType}  // 修复：使用 value 而不是 defaultValue
             style={{ width: 200 }}
@@ -302,8 +390,13 @@ const UserManagement = () => {
               </Space>
             </Option>
           </Select>
-        }
-      >
+          
+
+          </Col>
+        </Row>
+
+
+        
         <Table
           columns={columns}
           dataSource={getCurrentData()}

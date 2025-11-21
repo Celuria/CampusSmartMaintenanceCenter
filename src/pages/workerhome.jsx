@@ -171,7 +171,8 @@ const WorkerHome = () => {
             right: 0,
             left: collapsed ? 80 : 200,
             top: 64,
-            position: "fixed",
+            bottom:0,
+            position: "absolute",
           }}
         >
           {currentMenu === "my-tasks" && <MyTask />}

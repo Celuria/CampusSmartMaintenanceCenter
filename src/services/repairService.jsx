@@ -26,10 +26,10 @@ export const REPAIRMEN = {
 
 
 //11.18添加紧急程度类型
-export const URGENCY_LEVELS = {
-  NORMAL: { value: "normal", label: "一般", color: "blue" },
-  URGENT: { value: "urgent", label: "较紧急", color: "orange" },
-  CRITICAL: { value: "critical", label: "紧急", color: "red" },
+export const priority_LEVELS = {
+  LOW: { value: "low", label: "一般", color: "blue" },
+  MEDIUM: { value: "medium", label: "较紧急", color: "orange" },
+  HIGH: { value: "high", label: "紧急", color: "red" },
 };
 
 
@@ -46,14 +46,14 @@ export const mockRepairOrders = [
     studentID: "001",
     studentName: "张三",
     contactPhone: "13800138000",
-    urgency: "urgent", // 添加紧急程度
+    priority: "high", // 添加紧急程度
     created_at: "2025-11-10 10:30:00",
     rejection_reason: null,
     assigned_at: "2025-11-11 9:30:00",
     completed_at: null,
     closed_at: null,
-    processNotes: null,
     repairNotes: null,
+    processNotes: null,
   },
   {
     id: 2,
@@ -66,7 +66,7 @@ export const mockRepairOrders = [
     studentID: "001",
     studentName: "张三",
     contactPhone: "13800138001",
-    urgency: "normal", // 添加紧急程度
+    priority: "low", // 添加紧急程度
     created_at: "2025-11-11 10:30:00",
     rejection_reason: null,
     assigned_at: null,
@@ -86,13 +86,14 @@ export const mockRepairOrders = [
     studentID: "001",
     studentName: "张三",
     contactPhone: "13800138002",
-    urgency: "critical", // 添加紧急程度
+    priority: "high", // 添加紧急程度
     created_at: "2025-11-12 12:30:00",
     rejection_reason: null,
     assigned_at: "2025-11-12 14:00:00",
     completed_at: "2025-11-13 15:30:00",
     closed_at: null,
     repairNotes: "维修师傅已检查，需要更换零件，预计明天完成维修。",
+    processNotes: "已联系学生，安排明天更换零件。",
   },
   {
     id: 4,
@@ -105,13 +106,14 @@ export const mockRepairOrders = [
     studentID: "001",
     studentName: "张三",
     contactPhone: "13800138002",
-    urgency: "critical", // 添加紧急程度
+    priority: "medium", // 添加紧急程度
     created_at: "2025-11-12 12:30:00",
     rejection_reason: null,
     assigned_at: "2025-11-12 14:00:00",
     completed_at: "2025-11-13 15:30:00",
     closed_at: null,
     repairNotes: "789",
+    processNotes: "012",
   },
 ];
 
@@ -162,7 +164,7 @@ export const repairService = {
     const newOrder = {
       id: newId,
       ...orderData,
-      urgency: orderData.urgency || "normal",
+      priority: orderData.priority || "low",
       created_at: new Date().toISOString().replace("T", " ").substring(0, 19),
       status: REPAIR_STATUS.PENDING.value,
       rejection_reason: null,
@@ -325,13 +327,13 @@ export const repairUtils = {
   },
 
   // 11.18获取紧急程度信息
-  getUrgencyInfo: (urgency) => {
-    const urgencyMap = {
-      normal: { label: "低", color: "blue" },
-      urgent: { label: "中", color: "orange" },
-      critical: { label: "高", color: "red" },
+  getpriorityInfo: (priority) => {
+    const priorityMap = {
+      low: { label: "低", color: "blue" },
+      medium: { label: "中", color: "orange" },
+      high: { label: "高", color: "red" },
     };
-    return urgencyMap[urgency] || { label: urgency, color: "default" };
+    return priorityMap[priority] || { label: priority, color: "default" };
   },
 };
 

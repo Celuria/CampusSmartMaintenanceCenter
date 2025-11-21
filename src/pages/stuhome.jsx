@@ -204,8 +204,7 @@ const Home = () => {
             right: 0,
             left: collapsed ? 80 : 200,
             top: 64,
-            bottom: 64,
-            position: "fixed",
+            position: "absolute",
           }}
         >
           {currentMenu === "my-repairs" && (

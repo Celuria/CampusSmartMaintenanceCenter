@@ -8,7 +8,7 @@ import { feedbackService } from '../services/feedbackService';
 
 const FeedbackManagement = () => {
   const [feedbacks, setFeedbacks] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [, setLoading] = useState(false);
   const [deletingId, setDeletingId] = useState(null); // 跟踪正在删除的ID
 
   // 加载评价数据
