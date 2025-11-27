@@ -6,10 +6,10 @@ import {
   AppstoreOutlined,
   PlusOutlined,
 } from "@ant-design/icons";
-import MyRepairs from "../components/MyRepairs";
-import CreateRepairPage from "../components/CreateRepairPage";
-import PersonalInfoEd from "../model/PersonalInfoEd";
-import { repairService } from "../services/repairService";
+import MyRepairs from "./MyRepairs";
+import CreateRepairPage from "./CreateRepairPage";
+import PersonalInfoEd from "../Services/PersonalInfoEd";
+import { repairService } from "../Services/repairService";
 
 const { Sider, Content, Header } = Layout;
 

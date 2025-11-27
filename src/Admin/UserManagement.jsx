@@ -1,44 +1,57 @@
-// src/components/UserManagement.jsx
-//管理员端：用户管理
-
-import React, { useState} from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, Table, Space, Select, Row, Col, Statistic, Tag,
   Button, Modal, Form, Input, message, Popconfirm
 } from 'antd';
 import { UserOutlined, ToolOutlined, TeamOutlined, PhoneOutlined,
   EditOutlined, DeleteOutlined, KeyOutlined
  } from '@ant-design/icons';
+import { userService } from './userService';
 
 const { Option } = Select;
 
 const UserManagement = () => {
   const [currentUserType, setCurrentUserType] = useState('students');
-  const [loading] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [editModalVisible, setEditModalVisible] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [form] = Form.useForm();
 
-  // 模拟学生账号数据
-  const [studentAccounts, setStudentAccounts] = useState([
-    { id: '20210001', number:"stu001", name: '张三', phone: '13800138001', type: 'student' },
-    { id: '20210002', number:"stu002", name: '李四', phone: '13800138002', type: 'student' },
-    { id: '20210003', number:"stu003", name: '王五', phone: '13800138003', type: 'student' },
-    { id: '20210004', number:"stu004", name: '赵六', phone: '13800138004', type: 'student' },
-    { id: '20210005', number:"stu005", name: '钱七', phone: '13800138005', type: 'student' },
-    { id: '20210006', number:"stu006", name: '孙八', phone: '13800138006', type: 'student' },
-  ]);
+  // 状态管理
+  const [studentAccounts, setStudentAccounts] = useState([]);
+  const [repairmanAccounts, setRepairmanAccounts] = useState([]);
+  const [searchField, setSearchField] = useState('name');
+  const [searchKeyword, setSearchKeyword] = useState('');
 
-  // 模拟维修人员账号数据
-  const [repairmanAccounts, setRepairmanAccounts] = useState([
-    { id: '20210007', number:"worker001", name: '张师傅', phone: '13900139001', type: 'repairman' },
-    { id: '20210008', number:"worker002", name: '李师傅', phone: '13900139002', type: 'repairman' },
-    { id: '20210009', number:"worker003", name: '王师傅', phone: '13900139003', type: 'repairman' },
-    { id: '20210010', number:"worker004", name: '赵师傅', phone: '13900139004', type: 'repairman' },
-  ]);
+  // 加载学生账号数据
+  const loadStudents = async (filters = {}) => {
+    setLoading(true);
+    try {
+      const result = await userService.getStudents(filters);
+      setStudentAccounts(result.data);
+    } catch (error) {
+      console.error('加载学生数据失败:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 加载维修人员账号数据
+  const loadRepairmen = async (filters = {}) => {
+    setLoading(true);
+    try {
+      const result = await userService.getRepairmen(filters);
+      setRepairmanAccounts(result.data);
+    } catch (error) {
+      console.error('加载维修人员数据失败:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // 处理下拉菜单选择
   const handleUserTypeChange = (value) => {
     setCurrentUserType(value);
+    setSearchKeyword(''); // 切换类型时清空搜索关键词
   };
 
   // 获取当前显示的数据
@@ -52,46 +65,28 @@ const UserManagement = () => {
   };
 
   // 删除用户
-  const handleDelete = (record) => {
-    if (currentUserType === 'students') {
-      setStudentAccounts(prev => prev.filter(user => user.id !== record.id));
-    } else {
-      setRepairmanAccounts(prev => prev.filter(user => user.id !== record.id));
+  const handleDelete = async (record) => {
+    try {
+      await userService.deleteUser(record.id, record.type);
+      // 重新加载数据
+      if (currentUserType === 'students') {
+        loadStudents();
+      } else {
+        loadRepairmen();
+      }
+    } catch (error) {
+      console.error('删除用户失败:', error);
     }
-    message.success('用户删除成功');
   };
 
-  // 修复重置密码函数
-  const handleResetPassword = (record) => {
+  // 重置密码函数
+  const handleResetPassword = async (record) => {
     try {
-      // 获取当前日期，格式为 YYYYMMDD
-      const today = new Date();
-      const year = today.getFullYear();
-      const month = String(today.getMonth() + 1).padStart(2, '0');
-      const day = String(today.getDate()).padStart(2, '0');
-      const dateStr = `${year}${month}${day}`;
-    
-      // 生成新密码：用户ID + 当前日期
-      const newPassword = `${dateStr}`;
-      console.log(`用户 ${record.name} 的新密码为: ${newPassword}`);
-      // 使用 Modal 弹窗显示重置密码信息
-      Modal.success({
-        title: '密码重置成功',
-        content: (
-          <div>
-            <p>已重置用户 <strong>{record.name}</strong> 的密码</p>
-            <p>新密码：<strong>{newPassword}</strong></p>
-            <p style={{ color: '#ff4d4f', fontSize: '12px' }}>
-              提示：请告知用户及时登录并修改密码
-            </p>
-          </div>
-        ),
-        okText: '确定',
-        width: 400,
-      });
+      await userService.resetPassword(record.id);
+      // 在实际项目中，这里可以显示新密码
+      // 暂时使用默认的成功消息
     } catch (error) {
       console.error('重置密码失败:', error);
-      message.error('重置密码失败');
     }
   };
 
@@ -109,25 +104,20 @@ const UserManagement = () => {
   const handleSaveEdit = async () => {
     try {
       const values = await form.validateFields();
-      const updatedUser = { ...editingUser, ...values };
+      await userService.updateUser(editingUser.id, values);
       
-      if (currentUserType === 'students') {
-        setStudentAccounts(prev => 
-          prev.map(user => user.id === updatedUser.id ? updatedUser : user)
-        );
-      } else {
-        setRepairmanAccounts(prev => 
-          prev.map(user => user.id === updatedUser.id ? updatedUser : user)
-        );
-      }
-      
-      message.success('用户信息更新成功');
       setEditModalVisible(false);
       setEditingUser(null);
       form.resetFields();
+      
+      // 重新加载数据
+      if (currentUserType === 'students') {
+        loadStudents();
+      } else {
+        loadRepairmen();
+      }
     } catch (error) {
-      console.error('表单验证失败:', error);
-      message.error('保存失败，请检查表单数据');
+      console.error('保存编辑失败:', error);
     }
   };
 
@@ -137,6 +127,38 @@ const UserManagement = () => {
     setEditingUser(null);
     form.resetFields();
   };
+
+  // 处理搜索
+  const handleSearch = (value) => {
+    setSearchKeyword(value);
+    const filters = {};
+    if (value) {
+      filters[searchField] = value;
+    }
+    
+    if (currentUserType === 'students') {
+      loadStudents(filters);
+    } else {
+      loadRepairmen(filters);
+    }
+  };
+
+  // 重置搜索
+  const handleResetSearch = () => {
+    setSearchKeyword('');
+    if (currentUserType === 'students') {
+      loadStudents();
+    } else {
+      loadRepairmen();
+    }
+    message.success('已重置搜索');
+  };
+
+  // 初始化加载数据
+  useEffect(() => {
+    loadStudents();
+    loadRepairmen();
+  }, []);
 
   // 表格列定义
   const columns = [
@@ -282,28 +304,12 @@ const UserManagement = () => {
       {/* 用户类型选择和表格 */}
       <Card 
         title={getCurrentTitle()}
-        
       >
-        {(() => {
-          // 保存原始数据（深拷贝），只在第一次渲染时执行
-          if (!window.__originalUserAccounts) {
-            window.__originalUserAccounts = {
-              students: JSON.parse(JSON.stringify(studentAccounts)),
-              repairmen: JSON.parse(JSON.stringify(repairmanAccounts)),
-            };
-          }
-          // 默认搜索字段
-          if (!window.__userSearchField) {
-            window.__userSearchField = 'name';
-          }
-          return null;
-        })()}
-
         <Row gutter={12} style={{ marginBottom: 16, alignItems: 'center' }}>
           <Col>
             <Select
-              defaultValue={window.__userSearchField}
-              onChange={(val) => { window.__userSearchField = val; }}
+              value={searchField}
+              onChange={(val) => setSearchField(val)}
               style={{ width: 140 }}
               size="middle"
             >
@@ -319,51 +325,16 @@ const UserManagement = () => {
               placeholder="请输入关键词（回车或点击搜索）"
               enterButton="搜索"
               allowClear
-              onSearch={(value) => {
-                const kw = String(value || '').trim().toLowerCase();
-                const field = window.__userSearchField || 'name';
-                const original = window.__originalUserAccounts;
-                if (!original) return;
-
-                if (!kw) {
-                  // 关键词为空时恢复原始列表
-                  if (currentUserType === 'students') {
-                    setStudentAccounts(JSON.parse(JSON.stringify(original.students)));
-                  } else {
-                    setRepairmanAccounts(JSON.parse(JSON.stringify(original.repairmen)));
-                  }
-                  message.info('已清除筛选');
-                  return;
-                }
-
-                const source = currentUserType === 'students' ? original.students : original.repairmen;
-                const filtered = source.filter((u) =>
-                  String(u[field] ?? '').toLowerCase().includes(kw)
-                );
-
-                if (currentUserType === 'students') {
-                  setStudentAccounts(filtered);
-                } else {
-                  setRepairmanAccounts(filtered);
-                }
-                message.success(`筛选完成：共 ${filtered.length} 条结果`);
-              }}
+              value={searchKeyword}
+              onChange={(e) => setSearchKeyword(e.target.value)}
+              onSearch={handleSearch}
               size="middle"
             />
           </Col>
 
           <Col>
             <Button
-              onClick={() => {
-                const original = window.__originalUserAccounts;
-                if (!original) return;
-                if (currentUserType === 'students') {
-                  setStudentAccounts(JSON.parse(JSON.stringify(original.students)));
-                } else {
-                  setRepairmanAccounts(JSON.parse(JSON.stringify(original.repairmen)));
-                }
-                message.success('已重置为原始数据');
-              }}
+              onClick={handleResetSearch}
               size="middle"
             >
               重置
@@ -371,32 +342,28 @@ const UserManagement = () => {
           </Col>
 
           <Col>
-          <Select
-            value={currentUserType}  // 修复：使用 value 而不是 defaultValue
-            style={{ width: 200 }}
-            onChange={handleUserTypeChange}
-            size="large"
-          >
-            <Option value="students">  {/* 修复：保持值一致 */}
-              <Space>
-                <UserOutlined />
-                学生账号
-              </Space>
-            </Option>
-            <Option value="repairman">  {/* 修复：改为 repairman 与状态一致 */}
-              <Space>
-                <ToolOutlined />
-                维修人员账号
-              </Space>
-            </Option>
-          </Select>
-          
-
+            <Select
+              value={currentUserType}
+              style={{ width: 200 }}
+              onChange={handleUserTypeChange}
+              size="large"
+            >
+              <Option value="students">
+                <Space>
+                  <UserOutlined />
+                  学生账号
+                </Space>
+              </Option>
+              <Option value="repairman">
+                <Space>
+                  <ToolOutlined />
+                  维修人员账号
+                </Space>
+              </Option>
+            </Select>
           </Col>
         </Row>
 
-
-        
         <Table
           columns={columns}
           dataSource={getCurrentData()}
@@ -450,7 +417,7 @@ const UserManagement = () => {
             name="phone"
             rules={[
               { required: true, message: '请输入联系电话!' },
-              //{ pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号码!' }
+              { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号码!' }
             ]}
           >
             <Input placeholder="请输入联系电话" />
@@ -459,7 +426,7 @@ const UserManagement = () => {
           <Form.Item
             label="用户类型"
           >
-            <Input value={editingUser?.type} disabled />
+            <Input value={editingUser?.type === 'student' ? '学生' : '维修人员'} disabled />
           </Form.Item>
         </Form>
       </Modal>

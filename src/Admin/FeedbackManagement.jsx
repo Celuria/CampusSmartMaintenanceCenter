@@ -1,15 +1,12 @@
-// src/components/FeedbackManagement.jsx
-//管理员端：评价管理
-
 import React, { useState, useEffect } from 'react';
-import { Card, Rate, Button, Space, Tag, message, List, Popconfirm } from 'antd';
-import { DeleteOutlined } from '@ant-design/icons';
-import { feedbackService } from '../services/feedbackService';
+import { Card, Rate, Button, Space, Tag,List, Popconfirm, Statistic, Row, Col } from 'antd';
+import { DeleteOutlined, UserOutlined, StarOutlined, MessageOutlined } from '@ant-design/icons';
+import { feedbackService } from './feedbackService';
 
 const FeedbackManagement = () => {
   const [feedbacks, setFeedbacks] = useState([]);
-  const [, setLoading] = useState(false);
-  const [deletingId, setDeletingId] = useState(null); // 跟踪正在删除的ID
+  const [loading, setLoading] = useState(false);
+  const [deletingId, setDeletingId] = useState(null);
 
   // 加载评价数据
   const loadFeedbacks = async () => {
@@ -19,7 +16,7 @@ const FeedbackManagement = () => {
       setFeedbacks(data);
     } catch (error) {
       console.error('加载评价数据失败:', error);
-      message.error('加载评价数据失败');
+      // 错误信息已经在service中显示
     } finally {
       setLoading(false);
     }
@@ -29,43 +26,37 @@ const FeedbackManagement = () => {
     loadFeedbacks();
   }, []);
 
-  // 删除评价 - 修复后的版本
+  // 删除评价
   const handleDeleteFeedback = async (feedbackId) => {
-    setDeletingId(feedbackId); // 设置正在删除的ID
+    setDeletingId(feedbackId);
     
     try {
-      console.log('开始删除评价:', feedbackId);
+      await feedbackService.deleteFeedback(feedbackId);
       
-      const success = await feedbackService.deleteFeedback(feedbackId);
-      
-      if (success) {
-        message.success('评价删除成功');
-        
-        // 从本地状态中移除已删除的评价
-        setFeedbacks(prevFeedbacks => 
-          prevFeedbacks.filter(feedback => feedback.id !== feedbackId)
-        );
-      } else {
-        message.error('删除失败，请重试');
-      }
+      // 从本地状态中移除已删除的评价
+      setFeedbacks(prevFeedbacks => 
+        prevFeedbacks.filter(feedback => feedback.id !== feedbackId)
+      );
     } catch (error) {
       console.error('删除评价失败:', error);
-      message.error('删除评价失败: ' + error.message);
+      // 错误信息已经在service中显示
     } finally {
-      setDeletingId(null); // 重置删除状态
+      setDeletingId(null);
     }
   };
 
   // 检查是否有不当内容
   const hasInappropriateContent = (comment) => {
     if (!comment) return false;
-    const inappropriateWords = ['badword']; // 您可以在这里添加敏感词
+    const inappropriateWords = ['badword', '脏话', '投诉']; // 示例敏感词
     return inappropriateWords.some(word => comment.toLowerCase().includes(word.toLowerCase()));
   };
 
   // 渲染每条评价卡片
   const renderFeedbackCard = (feedback) => {
-    const repairman = feedbackService.getRepairmanInfo(feedback.repairmanId);
+    // 使用API返回的维修人员姓名，如果没有则使用备用方法
+    const repairmanName = feedback.repairmanName || 
+      feedbackService.getRepairmanInfo(feedback.repairmanId).name;
     
     // 根据评分设置标签颜色
     const getRatingTagColor = (rating) => {
@@ -85,6 +76,7 @@ const FeedbackManagement = () => {
           border: inappropriate ? '1px solid #ff4d4f' : '1px solid #d9d9d9'
         }}
         size="small"
+        loading={isDeleting}
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div style={{ flex: 1 }}>
@@ -105,12 +97,14 @@ const FeedbackManagement = () => {
             </div>
 
             {/* 参与方信息 */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8, flexWrap: 'wrap', gap: '8px' }}>
               <div>
-                <strong>评价人:</strong> {feedback.studentId}
+                <UserOutlined style={{ marginRight: 4 }} />
+                <strong>评价人:</strong> {feedback.studentName || feedback.studentId}
               </div>
               <div>
-                <strong>维修人员:</strong> {repairman.name}
+                <UserOutlined style={{ marginRight: 4 }} />
+                <strong>维修人员:</strong> {repairmanName}
               </div>
             </div>
 
@@ -123,7 +117,10 @@ const FeedbackManagement = () => {
                 borderRadius: 4,
                 border: inappropriate ? '1px solid #ffccc7' : 'none'
               }}>
-                <div style={{ fontWeight: 'bold', marginBottom: 4 }}>评论内容:</div>
+                <div style={{ fontWeight: 'bold', marginBottom: 4, display: 'flex', alignItems: 'center' }}>
+                  <MessageOutlined style={{ marginRight: 4 }} />
+                  评论内容:
+                </div>
                 <div style={{ 
                   color: inappropriate ? '#ff4d4f' : 'inherit',
                   fontStyle: inappropriate ? 'italic' : 'normal'
@@ -137,13 +134,13 @@ const FeedbackManagement = () => {
             )}
 
             {/* 时间信息 */}
-            <div style={{ color: '#666', fontSize: '12px' }}>
-              评价时间: {feedback.createdAt}
+            <div style={{ color: '#666', fontSize: '12px', display: 'flex', alignItems: 'center' }}>
+              <span>评价时间: {feedback.createdAt || feedback.created_at}</span>
             </div>
           </div>
 
           {/* 删除按钮 */}
-          <div style={{ marginLeft: 16 }}>
+          <div style={{ marginLeft: 16, flexShrink: 0 }}>
             <Popconfirm
               title="确定删除这条评价吗？"
               description="此操作不可恢复"
@@ -151,7 +148,6 @@ const FeedbackManagement = () => {
               okText="确定"
               cancelText="取消"
               okType="danger"
-              disabled={isDeleting}
             >
               <Button 
                 type="primary" 
@@ -161,7 +157,7 @@ const FeedbackManagement = () => {
                 loading={isDeleting}
                 disabled={isDeleting}
               >
-                {isDeleting ? '删除中...' : '删除'}
+                {isDeleting ? '删除中' : '删除'}
               </Button>
             </Popconfirm>
           </div>
@@ -176,41 +172,64 @@ const FeedbackManagement = () => {
     ? (feedbacks.reduce((sum, item) => sum + item.rating, 0) / totalFeedbacks).toFixed(1)
     : 0;
   const feedbacksWithComments = feedbacks.filter(f => f.comment && f.comment.trim() !== '').length;
+  const highRatings = feedbacks.filter(f => f.rating >= 4).length;
 
   return (
     <div style={{ padding: '16px' }}>
       <h2>评价管理</h2>
       
       {/* 统计信息 */}
-      <div style={{ display: 'flex', gap: '16px', marginBottom: '16px' }}>
-        <Card size="small" style={{ flex: 1 }}>
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#1890ff' }}>
-              {totalFeedbacks}
-            </div>
-            <div>总评价数</div>
-          </div>
-        </Card>
-        <Card size="small" style={{ flex: 1 }}>
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#52c41a' }}>
-              {averageRating}
-            </div>
-            <div>平均评分</div>
-          </div>
-        </Card>
-        <Card size="small" style={{ flex: 1 }}>
-          <div style={{ textAlign: 'center' }}>
-            <div style={{ fontSize: '24px', fontWeight: 'bold', color: '#faad14' }}>
-              {feedbacksWithComments}
-            </div>
-            <div>有文字评价</div>
-          </div>
-        </Card>
-      </div>
+      <Row gutter={16} style={{ marginBottom: '24px' }}>
+        <Col xs={24} sm={6}>
+          <Card size="small">
+            <Statistic
+              title="总评价数"
+              value={totalFeedbacks}
+              prefix={<MessageOutlined />}
+              valueStyle={{ color: '#1890ff' }}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} sm={6}>
+          <Card size="small">
+            <Statistic
+              title="平均评分"
+              value={averageRating}
+              prefix={<StarOutlined />}
+              valueStyle={{ color: '#52c41a' }}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} sm={6}>
+          <Card size="small">
+            <Statistic
+              title="有文字评价"
+              value={feedbacksWithComments}
+              prefix={<MessageOutlined />}
+              valueStyle={{ color: '#faad14' }}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} sm={6}>
+          <Card size="small">
+            <Statistic
+              title="好评数(4星+)"
+              value={highRatings}
+              prefix={<StarOutlined />}
+              valueStyle={{ color: '#cf1322' }}
+            />
+          </Card>
+        </Col>
+      </Row>
 
       {/* 评价列表 */}
-      {feedbacks.length === 0 ? (
+      {loading ? (
+        <Card>
+          <div style={{ textAlign: 'center', padding: '40px 0' }}>
+            <span>加载评价数据中...</span>
+          </div>
+        </Card>
+      ) : feedbacks.length === 0 ? (
         <Card>
           <div style={{ textAlign: 'center', padding: '40px 0', color: '#999' }}>
             暂无评价数据

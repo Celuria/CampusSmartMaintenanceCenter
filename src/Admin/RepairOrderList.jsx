@@ -1,6 +1,3 @@
-// src/components/RepairOrderList.jsx
-//管理员端：工单管理页面
-
 import React, { useState, useEffect } from 'react';
 import { 
   Table, Tag, Button, Space, Select, Input, 
@@ -9,15 +6,14 @@ import {
 import { 
   SearchOutlined, UserOutlined, CloseOutlined, CheckOutlined 
 } from '@ant-design/icons';
-import { repairService, repairUtils } from '../services/repairService';
+import { repairService, repairUtils } from '../Services/repairService';
 
 const { Option } = Select;
 const { Search } = Input;
 
-
-const RepairOrderList = ({ repairOrders: initialRepairOrders, loading: initialLoading }) => {
-  const [repairOrders, setRepairOrders] = useState(initialRepairOrders || []);
-  const [loading, setLoading] = useState(initialLoading || false);
+const RepairOrderList = ({ onRefresh }) => {
+  const [repairOrders, setRepairOrders] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [filters, setFilters] = useState({
     status: 'all',
     category: 'all',
@@ -26,16 +22,44 @@ const RepairOrderList = ({ repairOrders: initialRepairOrders, loading: initialLo
   const [assignModalVisible, setAssignModalVisible] = useState(false);
   const [rejectModalVisible, setRejectModalVisible] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const [repairmen, setRepairmen] = useState([]);
   const [assignForm] = Form.useForm();
   const [rejectForm] = Form.useForm();
 
-  // 获取维修人员列表
-  const repairmen = [
-    { id: 1, name: '张师傅' },
-    { id: 2, name: '李师傅' },
-    { id: 3, name: '王师傅' },
-    { id: 4, name: '赵师傅' },
-  ];
+  // 加载工单数据
+  const loadRepairOrders = async (searchFilters = {}) => {
+    setLoading(true);
+    try {
+      const result = await repairService.getRepairOrders({
+        ...filters,
+        ...searchFilters,
+      });
+      setRepairOrders(result.data);
+    } catch (error) {
+      console.error('获取工单失败:', error);
+      message.error('获取工单失败');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 加载维修人员列表
+  const loadRepairmen = async () => {
+    try {
+      const repairmenList = await repairService.getRepairmen();
+      setRepairmen(repairmenList);
+    } catch (error) {
+      console.error('获取维修人员列表失败:', error);
+      message.error('获取维修人员列表失败');
+      // 设置默认维修人员列表作为fallback
+      setRepairmen([
+        { id: 1, name: '张师傅' },
+        { id: 2, name: '李师傅' },
+        { id: 3, name: '王师傅' },
+        { id: 4, name: '赵师傅' },
+      ]);
+    }
+  };
 
   // 搜索和筛选工单
   const searchRepairOrders = async (searchFilters = {}) => {
@@ -90,7 +114,12 @@ const RepairOrderList = ({ repairOrders: initialRepairOrders, loading: initialLo
       await repairService.assignRepairman(selectedOrder.id, values.repairmanId);
       message.success('工单分配成功');
       setAssignModalVisible(false);
-      searchRepairOrders(); // 刷新数据
+      loadRepairOrders(); // 刷新数据
+      
+      // 通知父组件刷新
+      if (onRefresh) {
+        onRefresh();
+      }
     } catch (error) {
       console.error('分配工单失败:', error);
       message.error('分配工单失败');
@@ -103,7 +132,12 @@ const RepairOrderList = ({ repairOrders: initialRepairOrders, loading: initialLo
       await repairService.rejectRepairOrder(selectedOrder.id, values.reason);
       message.success('工单已驳回');
       setRejectModalVisible(false);
-      searchRepairOrders(); // 刷新数据
+      loadRepairOrders(); // 刷新数据
+      
+      // 通知父组件刷新
+      if (onRefresh) {
+        onRefresh();
+      }
     } catch (error) {
       console.error('驳回工单失败:', error);
       message.error('驳回工单失败');
@@ -112,10 +146,9 @@ const RepairOrderList = ({ repairOrders: initialRepairOrders, loading: initialLo
 
   // 初始化加载数据
   useEffect(() => {
-    if (initialRepairOrders) {
-      setRepairOrders(initialRepairOrders);
-    }
-  }, [initialRepairOrders]);
+    loadRepairOrders();
+    loadRepairmen();
+  }, []);
 
   // 表格列定义
   const columns = [
@@ -245,10 +278,9 @@ const RepairOrderList = ({ repairOrders: initialRepairOrders, loading: initialLo
               <Option value="pending">待受理</Option>
               <Option value="processing">处理中</Option>
               <Option value="completed">已完成</Option>
-              <Option value="canceled">待评价</Option>
+              <Option value="to_be_evaluated">待评价</Option>
               <Option value="closed">已关闭</Option>
               <Option value="rejected">已驳回</Option>
-              
             </Select>
           </Col>
           <Col span={6}>

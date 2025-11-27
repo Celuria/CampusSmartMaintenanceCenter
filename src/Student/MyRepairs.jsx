@@ -27,16 +27,14 @@ import {
   CheckCircleOutlined,
   StarOutlined,
 } from "@ant-design/icons";
-import { repairUtils, repairService } from "../services/repairService";
+import { repairUtils, repairService } from "../Services/repairService";
 
 const { Option } = Select;
 const { TextArea } = Input;
 
-const MyRepairs = ({
-  repairOrders: initialRepairOrders,
-  loading,
-  onRefresh,
-}) => {
+const MyRepairs = ({ onRefresh }) => {
+  const [repairOrders, setRepairOrders] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [detailModalVisible, setDetailModalVisible] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
   const [detailLoading, setDetailLoading] = useState(false);
@@ -54,9 +52,6 @@ const MyRepairs = ({
   const [feedback, setFeedback] = useState("");
   const [evaluating, setEvaluating] = useState(false);
 
-  // 使用本地状态管理已删除的ID，而不是整个数据数组
-  const [deletedOrderIds, setDeletedOrderIds] = useState(new Set());
-
   // 分类选项配置 - 使用 repairService 中的变量名
   const categoryOptions = [
     { value: "waterAndElectricity", label: "水电维修" },
@@ -66,11 +61,43 @@ const MyRepairs = ({
     { value: "publicFacilities", label: "公共设施" },
   ];
 
-  // 应用筛选 - 过滤掉已删除的订单
+  // 加载我的报修记录
+  const fetchMyRepairs = async () => {
+    setLoading(true);
+    try {
+      const result = await repairService.getMyRepairOrders();
+      setRepairOrders(result.data || []);
+      setFilteredOrders(result.data || []);
+    } catch (error) {
+      console.error("获取报修记录失败:", error);
+      message.error("获取报修记录失败");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 搜索我的报修记录
+  const searchMyRepairs = async (keyword = "") => {
+    setLoading(true);
+    try {
+      const searchParams = { ...filters };
+      if (keyword) {
+        searchParams.keyword = keyword;
+      }
+      
+      const result = await repairService.searchMyRepairOrders(searchParams);
+      setFilteredOrders(result.data || []);
+    } catch (error) {
+      console.error("搜索报修记录失败:", error);
+      message.error("搜索报修记录失败");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 应用筛选
   const applyFilters = () => {
-    let filtered = initialRepairOrders.filter(
-      (order) => !deletedOrderIds.has(order.id)
-    );
+    let filtered = repairOrders;
 
     // 状态筛选
     if (filters.status !== "all") {
@@ -95,8 +122,12 @@ const MyRepairs = ({
   };
 
   useEffect(() => {
+    fetchMyRepairs();
+  }, []);
+
+  useEffect(() => {
     applyFilters();
-  }, [filters, initialRepairOrders, deletedOrderIds]);
+  }, [filters, repairOrders]);
 
   // 处理筛选条件变化
   const handleFilterChange = (key, value) => {
@@ -113,6 +144,7 @@ const MyRepairs = ({
       category: "all",
       priority: "all",
     });
+    fetchMyRepairs(); // 重新加载所有数据
   };
 
   // 打开详情模态框
@@ -144,15 +176,15 @@ const MyRepairs = ({
     setSelectedOrder(null);
   };
 
-  // 删除报修记录 - 修复版
+  // 删除报修记录
   const handleDeleteRepair = async (record) => {
     try {
-      // 在实际项目中，这里应该调用删除API
-      // 暂时使用已删除ID集合来标记删除
-      setDeletedOrderIds((prev) => new Set([...prev, record.id]));
-
+      await repairService.deleteRepairOrder(record.id);
       message.success("报修记录删除成功");
 
+      // 刷新数据
+      fetchMyRepairs();
+      
       // 如果有传入刷新函数，则调用父组件的刷新
       if (onRefresh) {
         onRefresh();
@@ -188,24 +220,15 @@ const MyRepairs = ({
 
     setEvaluating(true);
     try {
-      // 在实际项目中，这里应该调用API提交评价
-      // 暂时模拟评价提交
-      console.log("提交评价:", {
-        orderId: evaluatingOrder.id,
-        rating,
-        feedback,
-      });
-
-      // 更新工单状态为"已完成"
-      await repairService.updateRepairOrderStatus(
-        evaluatingOrder.id,
-        "completed"
-      );
-
+      await repairService.evaluateRepairOrder(evaluatingOrder.id, rating, feedback);
+      
       message.success("评价提交成功！");
       handleCloseEvaluate();
 
       // 刷新数据
+      fetchMyRepairs();
+      
+      // 如果有传入刷新函数，则调用父组件的刷新
       if (onRefresh) {
         onRefresh();
       }
@@ -217,22 +240,19 @@ const MyRepairs = ({
     }
   };
 
-  // 统计信息 - 排除已删除的订单
+  // 统计信息
   const getStats = () => {
-    const visibleOrders = initialRepairOrders.filter(
-      (order) => !deletedOrderIds.has(order.id)
-    );
-    const total = visibleOrders.length;
-    const pending = visibleOrders.filter(
+    const total = repairOrders.length;
+    const pending = repairOrders.filter(
       (order) => order.status === "pending"
     ).length;
-    const processing = visibleOrders.filter(
+    const processing = repairOrders.filter(
       (order) => order.status === "processing"
     ).length;
-    const completed = visibleOrders.filter(
+    const completed = repairOrders.filter(
       (order) => order.status === "completed"
     ).length;
-    const toBeEvaluated = visibleOrders.filter(
+    const toBeEvaluated = repairOrders.filter(
       (order) => order.status === "to_be_evaluated"
     ).length;
 
@@ -467,57 +487,12 @@ const MyRepairs = ({
           <div>
             <span style={{ marginRight: 8 }}></span>
             <Input.Search
-              placeholder="按标题/描述/位置/学生姓名/工单号搜索"
+              placeholder="按标题/描述/位置搜索"
               allowClear
               enterButton="搜索"
-              style={{ width: 360 }}
+              style={{ width: 300 }}
               onSearch={(value) => {
-                const keyword = String(value || "")
-                  .trim()
-                  .toLowerCase();
-                // 如果为空则恢复默认筛选结果
-                if (!keyword) {
-                  applyFilters();
-                  return;
-                }
-
-                // 基于当前 active 筛选（状态/分类/紧急程度）然后再做关键词过滤
-                let filtered = initialRepairOrders.filter(
-                  (order) => !deletedOrderIds.has(order.id)
-                );
-
-                if (filters.status !== "all") {
-                  filtered = filtered.filter(
-                    (order) => order.status === filters.status
-                  );
-                }
-                if (filters.category !== "all") {
-                  filtered = filtered.filter(
-                    (order) => order.category === filters.category
-                  );
-                }
-                if (filters.priority !== "all") {
-                  filtered = filtered.filter(
-                    (order) => order.priority === filters.priority
-                  );
-                }
-
-                const result = filtered.filter((order) => {
-                  const fields = [
-                    order.title,
-                    order.description,
-                    order.location,
-                    order.studentName,
-                    order.studentID,
-                    String(order.id),
-                  ]
-                    .filter(Boolean)
-                    .map((f) => String(f).toLowerCase());
-
-                  return fields.some((f) => f.includes(keyword));
-                });
-
-                setFilteredOrders(result);
+                searchMyRepairs(value);
               }}
               onChange={(e) => {
                 // 清空输入时恢复默认筛选结果

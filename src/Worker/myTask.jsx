@@ -1,22 +1,18 @@
 // src/components/MyTask.jsx
-//维修人员端：我的任务
-
 import React, { useState, useEffect } from 'react';
 import { 
   Table, Tag, Button, Space, Select, Input, 
-  Modal, Form, message, Card, Row, Col, 
+  Modal, Form,  Card, Row, Col, 
   Statistic, Progress, Descriptions, Image
 } from 'antd';
-import { 
-  SearchOutlined, PlayCircleOutlined, CheckCircleOutlined,
+import { SearchOutlined, PlayCircleOutlined, CheckCircleOutlined,
   EditOutlined, EyeOutlined, ClockCircleOutlined,
   ExclamationCircleOutlined, StarOutlined
 } from '@ant-design/icons';
-import { mytaskService, mytaskUtils } from '../services/mytaskService';
+import { mytaskService, mytaskUtils } from './mytaskService.jsx';
 
 const { Option } = Select;
 const { Search } = Input;
-//const { confirm } = Modal;
 
 const MyTask = () => {
   const [tasks, setTasks] = useState([]);
@@ -37,8 +33,8 @@ const MyTask = () => {
   const [completeForm] = Form.useForm();
   const [notesForm] = Form.useForm();
 
-  // 当前维修工人ID（实际项目中应从登录信息中获取）
-  const currentRepairmanId = 1;
+  // 当前维修工人ID - 从登录信息中获取
+  const currentRepairmanId = 1; // 实际项目中应该从用户信息中获取
 
   // 加载任务列表
   const loadTasks = async (searchFilters = {}) => {
@@ -51,7 +47,7 @@ const MyTask = () => {
       setTasks(result.data);
     } catch (error) {
       console.error('加载任务失败:', error);
-      message.error('加载任务失败');
+      // 错误信息已经在service中显示，这里不需要重复显示
     } finally {
       setLoading(false);
     }
@@ -109,9 +105,15 @@ const MyTask = () => {
   };
 
   // 打开详情模态框
-  const handleDetailClick = (task) => {
-    setSelectedTask(task);
-    setDetailModalVisible(true);
+  const handleDetailClick = async (task) => {
+    try {
+      // 从API获取任务详情
+      const taskDetail = await mytaskService.getTaskById(task.id, currentRepairmanId);
+      setSelectedTask(taskDetail);
+      setDetailModalVisible(true);
+    } catch (error) {
+      console.error('获取任务详情失败:', error);
+    }
   };
 
   // 处理开始任务
@@ -122,13 +124,12 @@ const MyTask = () => {
         currentRepairmanId, 
         values.estimated_completion_time
       );
-      message.success('任务已开始处理');
       setStartModalVisible(false);
-      loadTasks();
-      loadStats();
+      loadTasks(); // 刷新任务列表
+      loadStats(); // 刷新统计数据
     } catch (error) {
       console.error('开始任务失败:', error);
-      message.error('开始任务失败');
+      // 错误信息已经在service中显示
     }
   };
 
@@ -140,13 +141,12 @@ const MyTask = () => {
         currentRepairmanId, 
         values.notes
       );
-      message.success('任务已完成');
       setCompleteModalVisible(false);
-      loadTasks();
-      loadStats();
+      loadTasks(); // 刷新任务列表
+      loadStats(); // 刷新统计数据
     } catch (error) {
       console.error('完成任务失败:', error);
-      message.error('完成任务失败');
+      // 错误信息已经在service中显示
     }
   };
 
@@ -158,12 +158,11 @@ const MyTask = () => {
         currentRepairmanId, 
         values.notes
       );
-      message.success('备注更新成功');
       setNotesModalVisible(false);
-      loadTasks();
+      loadTasks(); // 刷新任务列表
     } catch (error) {
       console.error('更新备注失败:', error);
-      message.error('更新备注失败');
+      // 错误信息已经在service中显示
     }
   };
 
@@ -270,8 +269,6 @@ const MyTask = () => {
       render: (_, record) => {
         const isPending = record.status === 'pending';
         const isProcessing = record.status === 'processing';
-        //const isCompleted = record.status === 'completed';
-        //const isToBeEvaluated = record.status === 'to_be_evaluated';
         
         return (
           <Space size="small" direction="vertical">
@@ -319,7 +316,7 @@ const MyTask = () => {
 
   return (
     <div
-      style={{ padding: 24, background: '#f0f2f5', minHeight: '100vh' }}>
+      style={{ padding: 24, background: '#ffffffff'}}>
       <h2>我的任务</h2>
       
       {/* 统计卡片 */}

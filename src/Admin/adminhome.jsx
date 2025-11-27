@@ -1,41 +1,67 @@
-// src/pages/WorkerHome.jsx (维修工端)
-import React, { useState } from "react";
-import { Layout, Menu, Avatar, Space, Card } from "antd";
+
+import React, { useState, useEffect } from "react";
+import { Layout, Menu, Avatar, Space, Dropdown, message } from "antd";
 import {
   UserOutlined,
-  AppstoreOutlined,
+  UserSwitchOutlined,
+  FileTextOutlined,
+  StarOutlined,
+  BarChartOutlined,
   EditOutlined,
   LogoutOutlined,
 } from "@ant-design/icons";
-import MyTask from "../components/mytask.jsx"; // 导入我的任务组件
-import Dropdown from "antd/es/dropdown/dropdown.js";
-import PersonalInfoEd from "../model/PersonalInfoEd.jsx";
+import RepairOrderList from "./RepairOrderList";
+import UserManagement from "./UserManagement";
+import DataAnalysis from "./DataAnalysis";
+import FeedbackManagement from "./FeedbackManagement";
+import PersonalInfoEd from "../Services/PersonalInfoEd"; // 导入个人信息编辑组件
+import { repairService } from "../Services/repairService";
 
 const { Sider, Content, Header } = Layout;
 
-const WorkerHome = () => {
-  const [currentMenu, setCurrentMenu] = useState("my-tasks");
+const AdminHome = () => {
+  const [currentMenu, setCurrentMenu] = useState("data-analysis");
+  const [repairOrders, setRepairOrders] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
+
   // 新增状态：控制个人信息编辑弹窗显示
   const [personalInfoModalVisible, setPersonalInfoModalVisible] =
     useState(false);
-  // 新增状态：当前维修工信息
-  const [currentWorker, setCurrentWorker] = useState({
-    username: "worker",
-    email: "worker@repair.com",
+
+  // 新增状态：当前管理员信息
+  const [currentAdmin, setCurrentAdmin] = useState({
+    username: "admin",
+    email: "admin@manage.edu.cn",
     phone: "",
-    department: "维修部",
-    position: "维修工",
+    department: "系统管理部",
+    position: "系统管理员",
   });
 
-  // 侧边栏菜单配置 - 只有"我的任务"一项
+  // 侧边栏菜单配置
   const sideMenuItems = [
     {
-      key: "my-tasks",
-      icon: <AppstoreOutlined />,
-      label: "我的任务",
+      key: "data-analysis",
+      icon: <BarChartOutlined />,
+      label: "数据统计与分析",
+    },
+    {
+      key: "user-management",
+      icon: <UserSwitchOutlined />,
+      label: "用户管理",
+    },
+    {
+      key: "order-management",
+      icon: <FileTextOutlined />,
+      label: "工单管理",
+    },
+    {
+      key: "feedback-management",
+      icon: <StarOutlined />,
+      label: "评价管理",
     },
   ];
+
   // 头像下拉菜单项
   const avatarMenuItems = [
     {
@@ -63,19 +89,45 @@ const WorkerHome = () => {
   // 处理头像下拉菜单点击
   const handleAvatarMenuClick = (e) => {
     if (e.key === "edit-profile") {
-      console.log("编辑个人信息");
+      console.log("点击了编辑个人信息");
+      // 打开个人信息编辑弹窗
       setPersonalInfoModalVisible(true);
     } else if (e.key === "logout") {
+      // 处理退出登录
       console.log("退出登录");
-      // 在这里处理退出登录逻辑
+      message.info("已退出登录");
+      // 这里可以添加退出登录的逻辑，比如清除token、跳转到登录页等
+      // window.location.href = '/login'; // 实际项目中可能需要路由跳转
     }
   };
 
-  //处理个人信息更新
-  const handlePersonalInfoUpdate = (updatedInfo) => {
-    setCurrentWorker(updatedInfo);
-    console.log("更新后的个人信息:", updatedInfo);
+  // 处理个人信息更新
+  const handleAdminInfoUpdate = (updatedInfo) => {
+    setCurrentAdmin(updatedInfo);
+    message.success("个人信息更新成功！");
+    // 在实际项目中，这里可以调用API将更新后的信息保存到后端
+    console.log("更新后的管理员信息:", updatedInfo);
   };
+
+  // 获取工单数据
+  const fetchRepairOrders = async () => {
+    setLoading(true);
+    try {
+      const result = await repairService.getRepairOrders();
+      setRepairOrders(result.data);
+    } catch (error) {
+      console.error("获取工单数据失败:", error);
+      message.error("获取工单数据失败");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (currentMenu === "order-management") {
+      fetchRepairOrders();
+    }
+  }, [currentMenu]);
 
   return (
     <Layout style={{ minHeight: "100vh" }}>
@@ -107,7 +159,7 @@ const WorkerHome = () => {
             fontWeight: "bold",
           }}
         >
-          {collapsed ? "维修" : "维修工系统"}
+          {collapsed ? "管理" : "报修管理系统"}
         </div>
 
         <Menu
@@ -137,11 +189,11 @@ const WorkerHome = () => {
           }}
         >
           <div style={{ fontSize: "16px", fontWeight: "bold" }}>
-            维修工工作台
+            管理员工作台
           </div>
 
           <Space size="middle">
-            <span>欢迎，维修工</span>
+            <span>欢迎，{currentAdmin.username}</span>
             <Dropdown
               menu={{
                 items: avatarMenuItems,
@@ -154,7 +206,8 @@ const WorkerHome = () => {
                 size="default"
                 icon={<UserOutlined />}
                 style={{
-                  backgroundColor: "#52c41a",
+                  cursor: "pointer",
+                  backgroundColor: "#fa541c",
                 }}
               />
             </Dropdown>
@@ -171,11 +224,18 @@ const WorkerHome = () => {
             right: 0,
             left: collapsed ? 80 : 200,
             top: 64,
-            bottom:0,
             position: "absolute",
           }}
         >
-          {currentMenu === "my-tasks" && <MyTask />}
+          {currentMenu === "user-management" && <UserManagement />}
+
+          {currentMenu === "order-management" && (
+            <RepairOrderList repairOrders={repairOrders} loading={loading} />
+          )}
+
+          {currentMenu === "feedback-management" && <FeedbackManagement />}
+
+          {currentMenu === "data-analysis" && <DataAnalysis />}
         </Content>
       </Layout>
 
@@ -183,11 +243,11 @@ const WorkerHome = () => {
       <PersonalInfoEd
         visible={personalInfoModalVisible}
         onCancel={() => setPersonalInfoModalVisible(false)}
-        userInfo={currentWorker}
-        onUpdate={handlePersonalInfoUpdate}
+        userInfo={currentAdmin}
+        onUpdate={handleAdminInfoUpdate}
       />
     </Layout>
   );
 };
 
-export default WorkerHome;
+export default AdminHome;

@@ -1,3 +1,7 @@
+// src/services/repairService.js
+import api from './api';
+import { message } from 'antd';
+
 // 工单状态枚举
 export const REPAIR_STATUS = {
   PENDING: { value: "pending", label: "待受理", color: "orange" },
@@ -10,282 +14,288 @@ export const REPAIR_STATUS = {
 
 // 报修分类枚举
 export const REPAIR_CATEGORIES = {
-  waterAndElectricity: { value: "水电维修", label: "水电维修" },
-  networkIssues: { value: "网络故障", label: "网络故障" },
-  furnitureRepair: { value: "家具维修", label: "家具维修" },
-  applianceIssues: { value: "电器故障", label: "电器故障" },
-  publicFacilities: { value: "公共设施", label: "公共设施" },
+  waterAndElectricity: { value: "waterAndElectricity", label: "水电维修" },
+  networkIssues: { value: "networkIssues", label: "网络故障" },
+  furnitureRepair: { value: "furnitureRepair", label: "家具维修" },
+  applianceIssues: { value: "applianceIssues", label: "电器故障" },
+  publicFacilities: { value: "publicFacilities", label: "公共设施" },
 };
 
-// 模拟维修人员数据
+// 维修人员数据
 export const REPAIRMEN = {
   1: { id: 1, name: "张师傅" },
   2: { id: 2, name: "李师傅" },
   3: { id: 3, name: "王师傅" },
 };
 
-
-//11.18添加紧急程度类型
+// 11.18添加紧急程度类型
 export const priority_LEVELS = {
   LOW: { value: "low", label: "一般", color: "blue" },
   MEDIUM: { value: "medium", label: "较紧急", color: "orange" },
   HIGH: { value: "high", label: "紧急", color: "red" },
 };
 
-
-// 模拟工单数据 - 使用你提供的数据结构
-export const mockRepairOrders = [
-  {
-    id: 1,
-    title: "卫生间漏水",
-    category: 'waterAndElectricity',
-    location: "3栋502寝室",
-    description: "卫生间水管接口处持续漏水，已经持续两天，地面有积水。",
-    status: REPAIR_STATUS.CLOSED.value,
-    repairmanId: 1,
-    studentID: "001",
-    studentName: "张三",
-    contactPhone: "13800138000",
-    priority: "high", // 添加紧急程度
-    created_at: "2025-11-10 10:30:00",
-    rejection_reason: null,
-    assigned_at: "2025-11-11 9:30:00",
-    completed_at: null,
-    closed_at: null,
-    repairNotes: null,
-    processNotes: null,
-  },
-  {
-    id: 2,
-    title: "教室灯管故障",
-    category: 'networkIssues',
-    location: "教学楼A201",
-    description: "教室前排左侧灯管闪烁不亮，影响上课视线。",
-    status: REPAIR_STATUS.PENDING.value,
-    repairmanId: 2,
-    studentID: "001",
-    studentName: "张三",
-    contactPhone: "13800138001",
-    priority: "low", // 添加紧急程度
-    created_at: "2025-11-11 10:30:00",
-    rejection_reason: null,
-    assigned_at: null,
-    completed_at: null,
-    closed_at: null,
-    repairNotes: null,
-    processNotes: null,
-  },
-  {
-    id: 3,
-    title: "声控灯故障",
-    category: 'publicFacilities',
-    location: "5栋3楼走廊",
-    description: "声控灯不灵敏，需要很大声音才会亮，晚上行走不便。",
-    status: REPAIR_STATUS.COMPLETED.value,
-    repairmanId: 3,
-    studentID: "001",
-    studentName: "张三",
-    contactPhone: "13800138002",
-    priority: "high", // 添加紧急程度
-    created_at: "2025-11-12 12:30:00",
-    rejection_reason: null,
-    assigned_at: "2025-11-12 14:00:00",
-    completed_at: "2025-11-13 15:30:00",
-    closed_at: null,
-    repairNotes: "维修师傅已检查，需要更换零件，预计明天完成维修。",
-    processNotes: "已联系学生，安排明天更换零件。",
-  },
-  {
-    id: 4,
-    title: "=w=",
-    category: 'furnitureRepair',
-    location: "123",
-    description: "456",
-    status: REPAIR_STATUS.TO_BE_EVALUATED.value,
-    repairmanId: 3,
-    studentID: "001",
-    studentName: "张三",
-    contactPhone: "13800138002",
-    priority: "medium", // 添加紧急程度
-    created_at: "2025-11-12 12:30:00",
-    rejection_reason: null,
-    assigned_at: "2025-11-12 14:00:00",
-    completed_at: "2025-11-13 15:30:00",
-    closed_at: null,
-    repairNotes: "789",
-    processNotes: "012",
-  },
-];
-
-// 数据服务方法
+// 数据服务方法 - 全部改为调用API
 export const repairService = {
-  // 获取所有工单
+  // 获取所有工单（管理员端使用）
   getRepairOrders: async (params = {}) => {
-    // 简单的过滤和分页逻辑
-    let data = [...mockRepairOrders];
-
-    // 状态过滤
-    if (params.status) {
-      data = data.filter((order) => order.status === params.status);
+    try {
+      const response = await api.admin.getAllOrders(params);
+      
+      if (response.code === 200) {
+        return {
+          data: response.data.list || response.data,
+          total: response.data.total || (response.data.list ? response.data.list.length : 0),
+          page: response.data.page || 1,
+          pageSize: response.data.pageSize || 10,
+        };
+      } else {
+        throw new Error(response.message || '获取工单失败');
+      }
+    } catch (error) {
+      console.error('获取工单失败:', error);
+      message.error('获取工单失败: ' + error.message);
+      throw error;
     }
+  },
 
-    // 分类过滤
-    if (params.category) {
-      data = data.filter((order) => order.category === params.category);
+  // 获取我的报修（学生端使用）
+  getMyRepairOrders: async (params = {}) => {
+    try {
+      const response = await api.student.getMyOrders(params);
+      
+      if (response.code === 200) {
+        return {
+          data: response.data.list || response.data,
+          total: response.data.total || (response.data.list ? response.data.list.length : 0),
+          page: response.data.page || 1,
+          pageSize: response.data.pageSize || 10,
+        };
+      } else {
+        throw new Error(response.message || '获取我的报修失败');
+      }
+    } catch (error) {
+      console.error('获取我的报修失败:', error);
+      message.error('获取我的报修失败: ' + error.message);
+      throw error;
     }
-
-    // 模拟分页
-    const page = params.page || 1;
-    const pageSize = params.pageSize || 10;
-    const startIndex = (page - 1) * pageSize;
-    const endIndex = startIndex + pageSize;
-    const paginatedData = data.slice(startIndex, endIndex);
-
-    return {
-      data: paginatedData,
-      total: data.length,
-      page,
-      pageSize,
-    };
   },
 
   // 根据ID获取单个工单
   getRepairOrderById: async (id) => {
-    const order = mockRepairOrders.find((order) => order.id === parseInt(id));
-    if (!order) {
-      throw new Error(`工单 ${id} 不存在`);
+    try {
+      const response = await api.student.getOrderDetail(id);
+      if (response.code === 200) {
+        return response.data;
+      } else {
+        throw new Error(response.message || '获取工单详情失败');
+      }
+    } catch (error) {
+      console.error('获取工单详情失败:', error);
+      message.error('获取工单详情失败: ' + error.message);
+      throw error;
     }
-    return order;
   },
 
   // 创建新工单
   createRepairOrder: async (orderData) => {
-    const newId = Math.max(...mockRepairOrders.map((o) => o.id)) + 1;
-    const newOrder = {
-      id: newId,
-      ...orderData,
-      priority: orderData.priority || "low",
-      created_at: new Date().toISOString().replace("T", " ").substring(0, 19),
-      status: REPAIR_STATUS.PENDING.value,
-      rejection_reason: null,
-      assigned_at: null,
-      completed_at: null,
-      closed_at: null,
-      images: orderData.images || [], // 保存图片数据
-    };
-    mockRepairOrders.unshift(newOrder);
-    return newOrder;
+    try {
+      // 如果是FormData（包含文件上传）
+      if (orderData instanceof FormData) {
+        const response = await api.student.createOrder(orderData);
+        if (response.code === 200) {
+          message.success('报修申请提交成功！');
+          return response.data;
+        } else {
+          throw new Error(response.message || '创建工单失败');
+        }
+      } else {
+        // 如果是普通对象数据
+        const formData = new FormData();
+        
+        // 添加文本字段
+        Object.keys(orderData).forEach(key => {
+          if (key !== 'images' && orderData[key] !== undefined && orderData[key] !== null) {
+            formData.append(key, orderData[key]);
+          }
+        });
+        
+        // 添加图片文件
+        if (orderData.images && Array.isArray(orderData.images)) {
+          orderData.images.forEach((file, index) => {
+            formData.append('images', file);
+            message.log('Appending file to FormData:', file, 'at index', index);
+          });
+        }
+        
+        const response = await api.student.createOrder(formData);
+        if (response.code === 200) {
+          message.success('报修申请提交成功！');
+          return response.data;
+        } else {
+          throw new Error(response.message || '创建工单失败');
+        }
+      }
+    } catch (error) {
+      console.error('创建工单失败:', error);
+      message.error('创建工单失败: ' + error.message);
+      throw error;
+    }
   },
 
   // 更新工单状态
   updateRepairOrderStatus: async (id, status, repairmanId = null) => {
-    const orderIndex = mockRepairOrders.findIndex(
-      (order) => order.id === parseInt(id)
-    );
-    if (orderIndex === -1) {
-      throw new Error("工单不存在");
+    try {
+      // 根据状态调用不同的API
+      let response;
+      if (status === 'processing' && repairmanId) {
+        response = await api.admin.assignOrder(id, repairmanId);
+      } else {
+        // 其他状态更新可能需要单独的API，这里暂时模拟
+        await new Promise(resolve => setTimeout(resolve, 500));
+        response = { code: 200, data: { id, status, repairmanId } };
+      }
+      
+      if (response.code === 200) {
+        message.success('工单状态更新成功');
+        return response.data;
+      } else {
+        throw new Error(response.message || '更新工单状态失败');
+      }
+    } catch (error) {
+      console.error('更新工单状态失败:', error);
+      message.error('更新工单状态失败: ' + error.message);
+      throw error;
     }
-
-    const updatedOrder = {
-      ...mockRepairOrders[orderIndex],
-      status,
-      repairmanId,
-    };
-
-    // 根据状态更新相应的时间字段
-    const now = new Date().toISOString().replace("T", " ").substring(0, 19);
-    if (
-      status === REPAIR_STATUS.PROCESSING.value &&
-      !updatedOrder.assigned_at
-    ) {
-      updatedOrder.assigned_at = now;
-    } else if (
-      status === REPAIR_STATUS.COMPLETED.value &&
-      !updatedOrder.completed_at
-    ) {
-      updatedOrder.completed_at = now;
-    }
-
-    mockRepairOrders[orderIndex] = updatedOrder;
-    return updatedOrder;
   },
 
   // 获取维修人员列表
   getRepairmen: async () => {
-    return Object.values(REPAIRMEN);
+    try {
+      const response = await api.admin.getRepairmen();
+      if (response.code === 200) {
+        return response.data;
+      } else {
+        throw new Error(response.message || '获取维修人员列表失败');
+      }
+    } catch (error) {
+      console.error('获取维修人员列表失败:', error);
+      // 返回默认维修人员列表作为fallback
+      return Object.values(REPAIRMEN);
+    }
   },
 
   // 分配维修人员
   assignRepairman: async (orderId, repairmanId) => {
-    const orderIndex = mockRepairOrders.findIndex(
-      (order) => order.id === parseInt(orderId)
-    );
-    if (orderIndex === -1) {
-      throw new Error("工单不存在");
+    try {
+      const response = await api.admin.assignOrder(orderId, repairmanId);
+      if (response.code === 200) {
+        message.success('维修人员分配成功');
+        return response.data;
+      } else {
+        throw new Error(response.message || '分配维修人员失败');
+      }
+    } catch (error) {
+      console.error('分配维修人员失败:', error);
+      message.error('分配维修人员失败: ' + error.message);
+      throw error;
     }
-
-    const now = new Date().toISOString().replace("T", " ").substring(0, 19);
-    mockRepairOrders[orderIndex].repairmanId = repairmanId;
-    mockRepairOrders[orderIndex].status = "processing";
-    mockRepairOrders[orderIndex].assigned_at = now;
-    mockRepairOrders[orderIndex].updatedAt = now;
-
-    return mockRepairOrders[orderIndex];
   },
 
   // 驳回工单
   rejectRepairOrder: async (orderId, reason) => {
-    const orderIndex = mockRepairOrders.findIndex(
-      (order) => order.id === parseInt(orderId)
-    );
-    if (orderIndex === -1) {
-      throw new Error("工单不存在");
+    try {
+      const response = await api.admin.rejectOrder(orderId, reason);
+      if (response.code === 200) {
+        message.success('工单已驳回');
+        return response.data;
+      } else {
+        throw new Error(response.message || '驳回工单失败');
+      }
+    } catch (error) {
+      console.error('驳回工单失败:', error);
+      message.error('驳回工单失败: ' + error.message);
+      throw error;
     }
-
-    const now = new Date().toISOString().replace("T", " ").substring(0, 19);
-    mockRepairOrders[orderIndex].status = "rejected";
-    mockRepairOrders[orderIndex].rejection_reason = reason;
-    mockRepairOrders[orderIndex].updatedAt = now;
-
-    return mockRepairOrders[orderIndex];
   },
 
   // 搜索工单
   searchRepairOrders: async (filters = {}) => {
-    let data = [...mockRepairOrders];
-
-    // 按状态筛选
-    if (filters.status && filters.status !== "all") {
-      data = data.filter((order) => order.status === filters.status);
+    try {
+      // 使用getRepairOrders API进行搜索
+      const response = await api.admin.getAllOrders(filters);
+      
+      if (response.code === 200) {
+        return {
+          data: response.data.list || response.data,
+          total: response.data.total || (response.data.list ? response.data.list.length : 0),
+          page: response.data.page || 1,
+          pageSize: response.data.pageSize || 10,
+        };
+      } else {
+        throw new Error(response.message || '搜索工单失败');
+      }
+    } catch (error) {
+      console.error('搜索工单失败:', error);
+      message.error('搜索工单失败: ' + error.message);
+      throw error;
     }
+  },
 
-    // 按分类筛选
-    if (filters.category && filters.category !== "all") {
-      data = data.filter((order) => order.category === filters.category);
+  // 搜索我的报修（学生端）
+  searchMyRepairOrders: async (filters = {}) => {
+    try {
+      const response = await api.student.getMyOrders(filters);
+      
+      if (response.code === 200) {
+        return {
+          data: response.data.list || response.data,
+          total: response.data.total || (response.data.list ? response.data.list.length : 0),
+          page: response.data.page || 1,
+          pageSize: response.data.pageSize || 10,
+        };
+      } else {
+        throw new Error(response.message || '搜索我的报修失败');
+      }
+    } catch (error) {
+      console.error('搜索我的报修失败:', error);
+      message.error('搜索我的报修失败: ' + error.message);
+      throw error;
     }
+  },
 
-    // 按关键词搜索（在位置和问题描述中搜索）
-    if (filters.keyword) {
-      const keyword = filters.keyword.toLowerCase();
-      data = data.filter(
-        (order) =>
-          order.location.toLowerCase().includes(keyword) ||
-          order.description.toLowerCase().includes(keyword)
-      );
+  // 删除报修（学生端）
+  deleteRepairOrder: async (orderId) => {
+    try {
+      const response = await api.student.deleteOrder(orderId);
+      if (response.code === 200) {
+        message.success('报修单删除成功');
+        return response.data;
+      } else {
+        throw new Error(response.message || '删除报修单失败');
+      }
+    } catch (error) {
+      console.error('删除报修单失败:', error);
+      message.error('删除报修单失败: ' + error.message);
+      throw error;
     }
+  },
 
-    // 模拟分页
-    const page = filters.page || 1;
-    const pageSize = filters.pageSize || 10;
-    const startIndex = (page - 1) * pageSize;
-    const endIndex = startIndex + pageSize;
-
-    return {
-      data: data.slice(startIndex, endIndex),
-      total: data.length,
-      page,
-      pageSize,
-    };
+  // 提交评价（学生端）
+  evaluateRepairOrder: async (orderId, rating, feedback) => {
+    try {
+      const response = await api.student.evaluateOrder(orderId, { rating, feedback });
+      if (response.code === 200) {
+        message.success('评价提交成功');
+        return response.data;
+      } else {
+        throw new Error(response.message || '提交评价失败');
+      }
+    } catch (error) {
+      console.error('提交评价失败:', error);
+      message.error('提交评价失败: ' + error.message);
+      throw error;
+    }
   },
 };
 
@@ -307,11 +317,11 @@ export const repairUtils = {
   // 获取分类信息
   getCategoryInfo: (category) => {
     const categoryMap = {
-      waterAndElectricity: { value: "水电维修", label: "水电维修" },
-      networkIssues: { value: "网络故障", label: "网络故障" },
-      furnitureRepair: { value: "家具维修", label: "家具维修" },
-      applianceIssues: { value: "电器故障", label: "电器故障" },
-      publicFacilities: { value: "公共设施", label: "公共设施" },
+      waterAndElectricity: { value: "waterAndElectricity", label: "水电维修" },
+      networkIssues: { value: "networkIssues", label: "网络故障" },
+      furnitureRepair: { value: "furnitureRepair", label: "家具维修" },
+      applianceIssues: { value: "applianceIssues", label: "电器故障" },
+      publicFacilities: { value: "publicFacilities", label: "公共设施" },
     };
     return categoryMap[category] || { label: category };
   },
@@ -334,46 +344,5 @@ export const repairUtils = {
       high: { label: "高", color: "red" },
     };
     return priorityMap[priority] || { label: priority, color: "default" };
-  },
-};
-
-// HTTP API 替代/补充接口：不修改现有静态数据，提供调用后端 REST API 的封装函数
-export const repairApi = {
-  // 查询工单列表：params 会被转为查询字符串
-  async fetchRepairOrders(params = {}) {
-    const qs = new URLSearchParams(params).toString();
-    const url = `/api/repairOrders${qs ? `?${qs}` : ""}`;
-    const res = await fetch(url, { method: "GET" });
-    if (!res.ok) throw new Error(`fetchRepairOrders failed: ${res.status}`);
-    return res.json();
-  },
-
-  // 根据 ID 获取单个工单
-  async fetchRepairOrderById(id) {
-    const res = await fetch(`/api/repairOrders/${id}`, { method: "GET" });
-    if (!res.ok) throw new Error(`fetchRepairOrderById failed: ${res.status}`);
-    return res.json();
-  },
-
-  // 分配维修人员到工单
-  async assignRepairmanApi(orderId, repairmanId) {
-    const res = await fetch(`/api/repairOrders/${orderId}/assign`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ repairmanId }),
-    });
-    if (!res.ok) throw new Error(`assignRepairmanApi failed: ${res.status}`);
-    return res.json();
-  },
-
-  // 驳回工单
-  async rejectRepairOrderApi(orderId, reason) {
-    const res = await fetch(`/api/repairOrders/${orderId}/reject`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ reason }),
-    });
-    if (!res.ok) throw new Error(`rejectRepairOrderApi failed: ${res.status}`);
-    return res.json();
   },
 };

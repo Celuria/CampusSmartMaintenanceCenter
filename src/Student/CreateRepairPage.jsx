@@ -11,7 +11,7 @@ import {
 import {
   UploadOutlined
 } from '@ant-design/icons';
-import { repairService } from '../services/repairService';
+import { repairService } from '../Services/repairService';
 
 const { Option } = Select;
 const { TextArea } = Input;
@@ -36,25 +36,37 @@ const CreateRepairPage = ({ currentUser, onSubmitSuccess }) => {
   const handleFormSubmit = async (values) => {
     setSubmitting(true);
     try {
-      // 生成图片URL数组（在实际项目中，这里应该上传到服务器并返回URL）
-      const imageUrls = fileList.map(file => {
-        // 如果是已经上传的图片，直接使用url
-        if (file.url) return file.url;
-        // 如果是新选择的图片，创建本地预览URL
-        if (file.originFileObj) {
-          return URL.createObjectURL(file.originFileObj);
-        }
-        return '';
-      }).filter(url => url !== '');
-
-      // 使用正确的学生ID格式
-      const formData = {
-        ...values,
-        studentID: currentUser.studentID,
-        images: imageUrls, // 保存图片URL数组
-      };
+      // 创建 FormData 对象，支持文件上传
+      const formData = new FormData();
       
-      console.log('提交的报修数据:', formData);
+      // 添加文本字段
+      Object.keys(values).forEach(key => {
+        if (values[key] !== undefined && values[key] !== null) {
+          formData.append(key, values[key]);
+        }
+      });
+      
+      // 添加学生ID
+      if (currentUser && currentUser.studentID) {
+        formData.append('studentID', currentUser.studentID);
+      }
+      
+      // 添加图片文件
+      fileList.forEach(file => {
+        if (file.originFileObj) {
+          formData.append('images', file.originFileObj);
+        }
+      });
+
+      console.log('提交的报修数据:', {
+        title: values.title,
+        category: values.category,
+        location: values.location,
+        description: values.description,
+        priority: values.priority,
+        studentID: currentUser?.studentID,
+        fileCount: fileList.length
+      });
       
       // 调用服务创建报修
       const newOrder = await repairService.createRepairOrder(formData);
@@ -194,7 +206,7 @@ const CreateRepairPage = ({ currentUser, onSubmitSuccess }) => {
           >
             <Select placeholder="请选择紧急程度" size="large">
               <Option value="low">低</Option>
-              <Option value="normal">中</Option>
+              <Option value="medium">中</Option>
               <Option value="high">高</Option>
             </Select>
           </Form.Item>

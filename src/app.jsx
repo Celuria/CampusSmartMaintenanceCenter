@@ -1,11 +1,11 @@
 import React from 'react';
 import {Routes, Route} from 'react-router-dom';
 
-import StuHome from './pages/stuhome';
-import WorkerHome from './pages/workerhome';
-import AdminHome from './pages/adminhome';
+import StuHome from './Student/stuhome';
+import WorkerHome from './Worker/workerhome';
+import AdminHome from './Admin/adminhome';
 import Login from './Login';
-import RepairOrderList from './components/RepairOrderList';
+import RepairOrderList from './Admin/RepairOrderList';
 import './App.css';
 function App(){
     return (
