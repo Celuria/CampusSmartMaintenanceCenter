@@ -41,7 +41,7 @@ export const mockRepairOrders = [
     category: 'waterAndElectricity',
     location: "3栋502寝室",
     description: "卫生间水管接口处持续漏水，已经持续两天，地面有积水。",
-    status: REPAIR_STATUS.PROCESSING.value,
+    status: REPAIR_STATUS.CLOSED.value,
     repairmanId: 1,
     studentID: "001",
     studentName: "张三",

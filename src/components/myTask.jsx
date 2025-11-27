@@ -370,19 +370,21 @@ const MyTask = () => {
               <Option value="completed">已完成</Option>
             </Select>
           </Col>
+
           <Col span={6}>
             <div style={{ marginBottom: 8 }}>分类筛选</div>
-            <Select
-              style={{ width: '100%' }}
-              value={filters.category}
+            <Select style={{ width: '100%' }} value={filters.category}
               onChange={(value) => handleFilterChange('category', value)}
             >
               <Option value="all">全部分类</Option>
-              <Option value="dormitory">宿舍</Option>
-              <Option value="classroom">教室</Option>
-              <Option value="public_area">公共区域</Option>
+              <Option value="waterAndElectricity">水电维修</Option>
+              <Option value="networkIssues">网络故障</Option>
+              <Option value="furnitureRepair">家具维修</Option>
+              <Option value="applianceIssues">电器故障</Option>
+              <Option value="publicFacilities">公共设施</Option>
             </Select>
           </Col>
+
           <Col span={6}>
             <div style={{ marginBottom: 8 }}>优先级筛选</div>
             <Select
@@ -396,6 +398,7 @@ const MyTask = () => {
               <Option value="low">低</Option>
             </Select>
           </Col>
+
           <Col span={6}>
             <div style={{ marginBottom: 8 }}>关键词搜索</div>
             <Search
