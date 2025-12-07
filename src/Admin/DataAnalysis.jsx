@@ -1,12 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { Row, Col, Card, Table, Tag, Spin, Statistic, Alert } from 'antd';
-import { Pie, Column } from '@ant-design/charts';
+import { Pie, Column, Line } from '@ant-design/charts';
 import { statisticsService } from './statisticsService';
+import { TASK_STATUS } from '../Worker/mytaskService';
 
 const DataAnalysis = () => {
   const [categoryData, setCategoryData] = useState([]);
   const [locationData, setLocationData] = useState([]);
   const [ratingData, setRatingData] = useState([]);
+  const [statusData, setStatusData] = useState([]);
+  const [monthlyData, setMonthlyData] = useState([]); // 新增：月度统计数据
   const [overallStats, setOverallStats] = useState({
     totalRepairs: 0,
     avgProcessingTime: '0 天',
@@ -20,27 +23,36 @@ const DataAnalysis = () => {
     setUsingMockData(false);
     
     try {
-      const [categoryStats, locationStats, ratingStats, overallStatsData] = await Promise.all([
+      // 新增：获取月度统计数据
+      const [categoryStats, locationStats, ratingStats, statusStats, monthlyStats, overallStatsData] = await Promise.all([
         statisticsService.getRepairCategoryStats(),
         statisticsService.getLocationRepairStats(),
         statisticsService.getRepairmanRatingStats(),
+        statisticsService.getOrderStatusStats(),
+        statisticsService.getMonthlyStats(), // 新增：获取月度统计
         statisticsService.getOverallStats()
       ]);
 
       console.log('分类统计数据:', categoryStats);
       console.log('位置统计数据:', locationStats);
       console.log('评分统计数据:', ratingStats);
+      console.log('状态统计数据:', statusStats);
+      console.log('月度统计数据:', monthlyStats); // 新增：调试信息
 
       setCategoryData(categoryStats);
       setLocationData(locationStats);
       setRatingData(ratingStats);
+      setStatusData(statusStats);
+      setMonthlyData(monthlyStats); // 设置月度统计数据
       setOverallStats(overallStatsData);
       
       // 检查是否使用了模拟数据
       const isUsingMockData = 
         JSON.stringify(categoryStats) === JSON.stringify(statisticsService.mockCategoryData) ||
         JSON.stringify(locationStats) === JSON.stringify(statisticsService.mockLocationData) ||
-        JSON.stringify(ratingStats) === JSON.stringify(statisticsService.mockRatingData);
+        JSON.stringify(ratingStats) === JSON.stringify(statisticsService.mockRatingData) ||
+        JSON.stringify(statusStats) === JSON.stringify(statisticsService.mockStatusData) ||
+        JSON.stringify(monthlyStats) === JSON.stringify(statisticsService.mockMonthlyData); // 新增：检查月度数据
       
       setUsingMockData(isUsingMockData);
     } catch (error) {
@@ -106,9 +118,10 @@ const DataAnalysis = () => {
         </Col>
       </Row>
 
+      {/* 2×2田字格布局 */}
       <Row gutter={[16, 16]}>
-        {/* 饼图 - 报修分类占比 */}
-        <Col xs={24} md={12} lg={8}>
+        {/* 第一行第一列：报修分类占比 */}
+        <Col xs={24} md={12}>
           <Card 
             title="报修分类占比" 
             variant="borderless"
@@ -122,8 +135,23 @@ const DataAnalysis = () => {
           </Card>
         </Col>
 
-        {/* 柱状图 - 具体位置报修数量排行 */}
-        <Col xs={24} md={12} lg={8}>
+        {/* 第一行第二列：工单状态分布（新增） */}
+        <Col xs={24} md={12}>
+          <Card 
+            title="工单状态分布" 
+            variant="borderless"
+            extra={
+              <div style={{ fontSize: '12px', color: '#666' }}>
+                总计: {statusData.reduce((sum, item) => sum + item.value, 0)} 个工单
+              </div>
+            }
+          >
+            <OrderStatusPieChart data={statusData} />
+          </Card>
+        </Col>
+
+        {/* 第二行第一列：具体位置报修数量排行 */}
+        <Col xs={24} md={12}>
           <Card 
             title="位置报修数量排行" 
             variant="borderless"
@@ -137,8 +165,8 @@ const DataAnalysis = () => {
           </Card>
         </Col>
 
-        {/* 表格 - 维修人员平均评分排行 */}
-        <Col xs={24} md={24} lg={8}>
+        {/* 第二行第二列：维修人员平均评分排行 */}
+        <Col xs={24} md={12}>
           <Card 
             title="维修人员评分排行" 
             variant="borderless"
@@ -149,6 +177,23 @@ const DataAnalysis = () => {
             }
           >
             <RepairmanRatingTable data={ratingData} />
+          </Card>
+        </Col>
+      </Row>
+
+      {/* 新增：月度统计折线图，放在田字格下面 */}
+      <Row gutter={[16, 16]} style={{ marginTop: '16px' }}>
+        <Col xs={24}>
+          <Card 
+            title="月度统计" 
+            variant="borderless"
+            extra={
+              <div style={{ fontSize: '12px', color: '#666' }}>
+                近六个月工单数量统计
+              </div>
+            }
+          >
+            <MonthlyLineChart data={monthlyData} />
           </Card>
         </Col>
       </Row>
@@ -191,6 +236,64 @@ const RepairCategoryPieChart = ({ data }) => {
   }
 };
 
+// 新增：工单状态分布饼图组件
+const OrderStatusPieChart = ({ data }) => {
+  console.log('状态饼图接收到的数据:', data);
+  
+  if (!data || data.length === 0) {
+    return <div style={{ textAlign: 'center', padding: '50px 0', color: '#999' }}>暂无数据</div>;
+  }
+
+  // 准备饼图数据，将状态值转换为对应的中文标签
+  const chartData = data.map(item => {
+    // 在 TASK_STATUS 常量中查找对应的配置
+    const statusKey = Object.keys(TASK_STATUS).find(
+      key => TASK_STATUS[key].value === item.status
+    );
+    
+    let statusConfig;
+    if (statusKey && TASK_STATUS[statusKey]) {
+      statusConfig = TASK_STATUS[statusKey];
+    } else {
+      // 如果找不到对应状态，使用默认值
+      console.warn(`未找到状态 ${item.status} 的配置，使用默认值`);
+      statusConfig = { label: item.status, color: '#d9d9d9' };
+    }
+    
+    return {
+      ...item,
+      type: statusConfig.label, // 使用中文标签
+      color: statusConfig.color
+    };
+  });
+
+  // 饼图配置
+  const config = {
+    data: chartData,
+    angleField: 'value',
+    colorField: 'type',
+    radius: 0.8,
+    label: {
+      type: 'outer',
+      content: (data) => `${data.type}: ${data.value}`,
+    },
+    interactions: [{ type: 'element-active' }],
+    height: 300,
+    appendPadding: 10,
+  };
+
+  try {
+    return <Pie {...config} />;
+  } catch (error) {
+    console.error('状态饼图渲染错误:', error);
+    return (
+      <div style={{ textAlign: 'center', padding: '50px 0', color: '#ff4d4f' }}>
+        图表渲染失败，请检查数据格式
+      </div>
+    );
+  }
+};
+
 // 修复后的柱状图组件
 const LocationRepairColumnChart = ({ data }) => {
   console.log('柱状图接收到的数据:', data);
@@ -224,6 +327,79 @@ const LocationRepairColumnChart = ({ data }) => {
     return <Column {...config} />;
   } catch (error) {
     console.error('柱状图渲染错误:', error);
+    return (
+      <div style={{ textAlign: 'center', padding: '50px 0', color: '#ff4d4f' }}>
+        图表渲染失败，请检查数据格式
+      </div>
+    );
+  }
+};
+
+// 新增：月度统计折线图组件
+const MonthlyLineChart = ({ data }) => {
+  console.log('折线图接收到的数据:', data);
+  
+  if (!data || data.length === 0) {
+    return <div style={{ textAlign: 'center', padding: '50px 0', color: '#999' }}>暂无数据</div>;
+  }
+
+  const config = {
+    data: data,
+    xField: 'month',
+    yField: 'orders',
+    smooth: true,
+    color: '#13c2c2',
+    lineStyle: {
+      lineWidth: 3,
+    },
+    point: {
+      size: 5,
+      shape: 'circle',
+      style: {
+        fill: 'white',
+        stroke: '#13c2c2',
+        lineWidth: 2,
+      },
+    },
+    xAxis: {
+      title: {
+        text: '月份',
+        style: {
+          fontSize: 14,
+        },
+      },
+    },
+    yAxis: {
+      title: {
+        text: '工单数量',
+        style: {
+          fontSize: 14,
+        },
+      },
+      label: {
+        formatter: (text) => `${text} 单`,
+      },
+    },
+    height: 400,
+    tooltip: {
+      formatter: (datum) => {
+        return { name: '工单数量', value: `${datum.orders} 单` };
+      },
+    },
+    meta: {
+      month: {
+        alias: '月份',
+      },
+      orders: {
+        alias: '工单数量',
+      },
+    },
+  };
+
+  try {
+    return <Line {...config} />;
+  } catch (error) {
+    console.error('折线图渲染错误:', error);
     return (
       <div style={{ textAlign: 'center', padding: '50px 0', color: '#ff4d4f' }}>
         图表渲染失败，请检查数据格式

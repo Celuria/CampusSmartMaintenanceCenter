@@ -1,5 +1,5 @@
 // src/services/statisticsService.js
-import api from '../Services/api';
+import api from '../services/api';
 import { message } from 'antd';
 
 // 统一的响应处理函数
@@ -48,6 +48,26 @@ export const mockRatingData = [
   { id: 3, name: '王师傅', rating: 4.7, completedOrders: 32 },
   { id: 4, name: '赵师傅', rating: 4.6, completedOrders: 28 },
   { id: 5, name: '钱师傅', rating: 4.5, completedOrders: 25 },
+];
+
+// 新增：工单状态模拟数据
+export const mockStatusData = [
+  { status: 'pending', value: 15 },
+  { status: 'processing', value: 8 },
+  { status: 'completed', value: 25 },
+  { status: 'to_be_evaluated', value: 12 },
+  { status: 'closed', value: 30 },
+  { status: 'rejected', value: 5 },
+];
+
+// 新增：月度统计模拟数据（最近六个月）
+export const mockMonthlyData = [
+  { month: '1月', orders: 120 },
+  { month: '2月', orders: 98 },
+  { month: '3月', orders: 156 },
+  { month: '4月', orders: 145 },
+  { month: '5月', orders: 178 },
+  { month: '6月', orders: 165 },
 ];
 
 export const statisticsService = {
@@ -144,8 +164,56 @@ export const statisticsService = {
     }
   },
 
+  // 新增：获取工单状态统计
+  getOrderStatusStats: async () => {
+    try {
+      const data = await handleApiResponse(() => api.admin.getStatsOrderStatus());
+      
+      if (data) {
+        // 转换数据格式以适配图表组件
+        const statusData = Array.isArray(data) ? data.map(item => ({
+          status: item.status,
+          value: Number(item.count || item.value || 0)
+        })) : [];
+        
+        return statusData.length > 0 ? statusData : mockStatusData;
+      }
+      
+      return mockStatusData;
+    } catch (error) {
+      console.error('获取工单状态统计失败:', error);
+      message.warning('使用模拟数据展示（工单状态统计）');
+      return mockStatusData;
+    }
+  },
+
+  // 新增：获取月度统计数据
+  getMonthlyStats: async () => {
+    try {
+      const data = await handleApiResponse(() => api.admin.getStatsMonthly());
+      
+      if (data) {
+        // 转换数据格式以适配图表组件
+        const monthlyData = Array.isArray(data) ? data.map(item => ({
+          month: item.month || item.date,
+          orders: Number(item.orders || item.count || 0)
+        })) : [];
+        
+        return monthlyData.length > 0 ? monthlyData : mockMonthlyData;
+      }
+      
+      return mockMonthlyData;
+    } catch (error) {
+      console.error('获取月度统计失败:', error);
+      message.warning('使用模拟数据展示（月度统计）');
+      return mockMonthlyData;
+    }
+  },
+
   // 导出模拟数据用于检查
   mockCategoryData,
   mockLocationData,
-  mockRatingData
+  mockRatingData,
+  mockStatusData, // 新增：导出状态模拟数据
+  mockMonthlyData // 新增：导出月度模拟数据
 };
